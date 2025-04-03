@@ -9,9 +9,11 @@ import AppIntro from './components/AppIntro.vue'
 </template>
 
 <style>
-html,
-body {
+#app {
   margin: 0;
   padding: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgb(51, 51, 51);
 }
 </style>
