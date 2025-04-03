@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted } from 'vue'
+import IntroScene from './IntroScene.vue'
 
 onMounted(() => {
   console.log('Component has been mounted')
@@ -7,24 +8,43 @@ onMounted(() => {
 </script>
 
 <template>
-  <v-row no-gutters id="col-wrap" style="height: 100vh; width: 100vw">
-    <v-col id="left-col"></v-col>
-    <v-col
-      id="right-col"
-      style="justify-items: center; align-content: center; background-color: rgb(51, 51, 51)"
+  <div class="three-container">
+    <IntroScene />
+    <div
+      class="overlay"
+      style="
+        position: absolute;
+        z-index: 1;
+        width: 50%;
+        right: 0;
+        height: 100%;
+        align-content: center;
+      "
     >
-      <p>Welcome to</p>
-      <p style="font-size: 3rem; text-transform: uppercase">Skullpted</p>
-      <br />
-
-      <v-btn variant="tonal" style="color: white" size="large">Get Started</v-btn>
-    </v-col>
-  </v-row>
+      <v-row class="overlay-row" no-gutters> <p>Welcome to</p> </v-row>
+      <v-row class="overlay-row" no-gutters
+        ><p style="font-size: 3rem; text-transform: uppercase">Skullpted</p>
+      </v-row>
+      <v-row class="overlay-row" no-gutters>
+        <v-btn variant="tonal" style="color: white" size="large">Get Started</v-btn></v-row
+      >
+    </div>
+  </div>
 </template>
 
 <style scoped>
-p {
+.three-container {
+  width: 100vw;
+  height: 100vh;
   font-size: 1.5rem;
   color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.overlay-row {
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0px 10px 0px;
 }
 </style>

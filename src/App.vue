@@ -15,5 +15,6 @@ import AppIntro from './components/AppIntro.vue'
   width: 100vw;
   height: 100vh;
   background-color: rgb(51, 51, 51);
+  color: white;
 }
 </style>
