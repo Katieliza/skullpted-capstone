@@ -1,15 +1,22 @@
 <script setup>
 import { onMounted } from 'vue'
+import { useStore } from '@/stores/store'
 import IntroScene from './IntroScene.vue'
+import AppMain from './AppMain.vue'
+
+const store = useStore()
 
 onMounted(() => {
-  console.log('Component has been mounted')
+  console.log('AppIntro has been mounted')
 })
 </script>
 
 <template>
+  <!-- Mount three canvas !-->
   <div class="three-container">
     <IntroScene />
+
+    <!-- Overlay to sit on top of canvas !-->
     <div
       class="overlay"
       style="
@@ -26,7 +33,10 @@ onMounted(() => {
         ><p style="font-size: 3rem; text-transform: uppercase">Skullpted</p>
       </v-row>
       <v-row class="overlay-row" no-gutters>
-        <v-btn variant="tonal" style="color: white" size="large">Get Started</v-btn></v-row
+        <!-- Switch to main view !-->
+        <v-btn @click="store.setView(AppMain)" variant="tonal" style="color: white" size="large"
+          >Get Started</v-btn
+        ></v-row
       >
     </div>
   </div>

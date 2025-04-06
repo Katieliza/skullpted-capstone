@@ -1,10 +1,13 @@
 <script setup>
-import AppIntro from './components/AppIntro.vue'
+import { useStore } from '@/stores/store'
+
+const store = useStore()
 </script>
 
 <template>
   <main>
-    <AppIntro />
+    <!-- Display the current component !-->
+    <component :is="store.currentView" />
   </main>
 </template>
 

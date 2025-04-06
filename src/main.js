@@ -1,15 +1,22 @@
 import './assets/main.css'
 
 import { createApp } from 'vue'
-import App from './App.vue'
-
-import 'vuetify/styles'
+import { createPinia } from 'pinia'
 import { createVuetify } from 'vuetify'
+import 'vuetify/styles'
+import App from './App.vue'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
+
+const app = createApp(App)
+
 const vuetify = createVuetify({
   components,
   directives,
 })
+app.use(vuetify)
 
-createApp(App).use(vuetify).mount('#app')
+const pinia = createPinia()
+app.use(pinia)
+
+app.mount('#app')

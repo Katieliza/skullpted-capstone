@@ -2,7 +2,6 @@
 <script setup>
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-import { GUI } from 'dat.gui'
 import { onMounted } from 'vue'
 
 onMounted(() => {
@@ -10,7 +9,6 @@ onMounted(() => {
   const canvas = document.getElementById('canvas')
   const scene = new THREE.Scene()
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
-  const gui = new GUI()
 
   // Get window size
   const windowWidth = window.innerWidth
@@ -18,9 +16,7 @@ onMounted(() => {
 
   // Set up camera
   const camera = new THREE.PerspectiveCamera(75, windowWidth / windowHeight, 0.1, 1000)
-  camera.position.set(0, 5, 5)
-  const cameraHelper = new THREE.CameraHelper(camera)
-  scene.add(cameraHelper)
+  camera.position.set(0, 2.5, 2.5)
 
   const axesHelper = new THREE.AxesHelper(3)
   scene.add(axesHelper)
@@ -44,6 +40,8 @@ onMounted(() => {
   const geometry = new THREE.BoxGeometry()
   const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 })
   const cube = new THREE.Mesh(geometry, material)
+  cube.position.set(-2, 0, 0)
+
   scene.add(cube)
 
   const animate = () => {
@@ -52,7 +50,7 @@ onMounted(() => {
     cube.rotation.y += 0.01
 
     controls.update
-    cameraHelper.update()
+
     renderer.render(scene, camera)
   }
 
