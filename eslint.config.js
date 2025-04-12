@@ -29,4 +29,10 @@ export default defineConfig([
     files: ['src/**/__tests__/*'],
   },
   skipFormatting,
+
+  {
+    rules: {
+      'no-unused-vars': 'off',
+    },
+  },
 ])

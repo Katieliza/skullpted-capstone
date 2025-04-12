@@ -1,4 +1,3 @@
-<!-- eslint-disable no-unused-vars -->
 <script setup>
 import { onMounted } from 'vue'
 import * as THREE from 'three'
@@ -17,17 +16,17 @@ onMounted(() => {
   const camera = new THREE.PerspectiveCamera(75, windowWidth / windowHeight, 0.1, 1000)
   camera.position.set(0, 0, 2.5)
 
-    // Handle window resize
-    window.addEventListener("resize", () => {
+  // Handle window resize
+  window.addEventListener('resize', () => {
     // Calculate new size
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
+    const windowWidth = window.innerWidth
+    const windowHeight = window.innerHeight
     // Update aspect ratio and projection matrix
-    camera.aspect = windowWidth / windowHeight;
-    camera.updateProjectionMatrix();
+    camera.aspect = windowWidth / windowHeight
+    camera.updateProjectionMatrix()
     // Update renderer size
-    renderer.setSize(windowWidth, windowHeight);
-  });
+    renderer.setSize(windowWidth, windowHeight)
+  })
 
   const axesHelper = new THREE.AxesHelper(3)
   //scene.add(axesHelper)
