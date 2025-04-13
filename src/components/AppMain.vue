@@ -1,10 +1,10 @@
 <script setup>
-import { onMounted } from 'vue'
-import MainScene from './MainScene.vue'
+import { onMounted } from "vue";
+import MainScene from "./MainScene.vue";
 
 onMounted(() => {
-  console.log('AppMain has been mounted')
-})
+  console.log("AppMain has been mounted");
+});
 </script>
 
 <template>

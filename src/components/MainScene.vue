@@ -50,17 +50,17 @@ onMounted(() => {
   // scene.add(axesHelper)
 
   // Init directional light & helper
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+  const directionalLight = new THREE.DirectionalLight("#ffffff", 1);
   const dLightHelper = new THREE.DirectionalLightHelper(directionalLight);
   //scene.add(dLightHelper);
 
   // Init ambient light
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+  const ambientLight = new THREE.AmbientLight("#ffffff", 0.5);
   scene.add(directionalLight, ambientLight);
 
   // Create model
   const modelGeo = new THREE.BoxGeometry();
-  const modelMat = new THREE.MeshStandardMaterial(0xffffff);
+  const modelMat = new THREE.MeshStandardMaterial("#1d4e89");
   const model = new THREE.Mesh(modelGeo, modelMat);
   scene.add(model);
 
