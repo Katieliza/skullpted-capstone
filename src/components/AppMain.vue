@@ -1,24 +1,62 @@
 <script setup>
 import { onMounted } from "vue";
+import { useStore } from "@/stores/store";
 import MainScene from "./MainScene.vue";
+
+const store = useStore();
 
 onMounted(() => {
   console.log("AppMain has been mounted");
 });
+
+function RequestZoomIn() {
+  //console.log("Requesing zoom in");
+  store.RequestZoomIn();
+}
+function RequestZoomOut() {
+  //console.log("Requesting zoom out");
+  store.RequestZoomOut();
+}
+function RequestZoomStop() {
+  //console.log("Requesting zoom stop");
+  store.RequestZoomStop();
+}
+function RequestZoomReset() {
+  // console.log("Requesting zoom reset");
+  store.RequestZoomReset();
+}
 </script>
 
 <template>
   <MainScene />
 
-  <!--Buttons to control zoom !-->
+  <!----------------------------------Zoom control buttons ---------------------------------------->
   <div
     id="zoom-controls"
     class="control-panel"
     style="padding-top: 2%; flex-direction: column; right: 35%"
   >
-    <button class="controls-button">Zoom In</button>
-    <button class="controls-button">Zoom Out</button>
-    <button class="controls-button">Reset Zoom</button>
+    <button
+      class="controls-button"
+      @mousedown="RequestZoomIn"
+      @mouseup="RequestZoomStop"
+      @mouseleave="RequestZoomStop"
+      @touchstart="RequestZoomIn"
+      @touchened="RequestZoomStop"
+    >
+      Zoom In
+    </button>
+    <button
+      class="controls-button"
+      @mousedown="RequestZoomOut"
+      @mouseup="RequestZoomStop"
+      @mouseleave="RequestZoomStop"
+      @touchstart="RequestZoomOut"
+      @touchened="RequestZoomStop"
+    >
+      Zoom Out
+    </button>
+    <button class="controls-button" @click="RequestZoomReset">Reset Zoom</button>
   </div>
 
   <div id="view-controls" class="control-panel" style="left: 25%; bottom: 5%">
