@@ -60,7 +60,7 @@ onMounted(() => {
 
   // Create model
   const modelGeo = new THREE.BoxGeometry();
-  const modelMat = new THREE.MeshStandardMaterial("#1d4e89");
+  const modelMat = new THREE.MeshStandardMaterial(0xffffff);
   const model = new THREE.Mesh(modelGeo, modelMat);
   scene.add(model);
 
@@ -72,7 +72,6 @@ onMounted(() => {
   animate();
 
   // *************************************** FUNCTIONS ****************************************** //
-
   var zoomInterval;
 
   function ZoomIn() {
@@ -94,9 +93,15 @@ onMounted(() => {
   function ZoomStop() {
     clearInterval(zoomInterval);
   }
-  function ZoomReset() {
+  function ViewReset() {
     clearInterval(zoomInterval);
     controls.reset();
+  }
+  function RotatePause() {
+    controls.autoRotate = false;
+  }
+  function RotatePlay() {
+    controls.autoRotate = true;
   }
 
   // Watch these functions for updates
@@ -121,12 +126,22 @@ onMounted(() => {
     },
   );
   watch(
-    () => store.zoomReset,
+    () => store.viewReset,
     (val) => {
       if (val) {
-        ZoomReset();
+        ViewReset();
       } else {
         ZoomStop();
+      }
+    },
+  );
+  watch(
+    () => store.rotate,
+    (val) => {
+      if (val) {
+        RotatePlay();
+      } else {
+        RotatePause();
       }
     },
   );

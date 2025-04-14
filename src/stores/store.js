@@ -7,7 +7,9 @@ export const useStore = defineStore("store", () => {
 
   const zoomIn = ref(false);
   const zoomOut = ref(false);
-  const zoomReset = ref(false);
+  const viewReset = ref(false);
+  const rotate = ref(true);
+  const rotateText = ref("Pause");
 
   function setView(viewName) {
     currentView.value = markRaw(viewName); // Mark as raw when updating
@@ -25,22 +27,35 @@ export const useStore = defineStore("store", () => {
     // console.log("Zoom stop request received");
     zoomIn.value = false;
     zoomOut.value = false;
-    zoomReset.value = false;
+    viewReset.value = false;
   }
-  function RequestZoomReset() {
+  function RequestViewReset() {
     // console.log("Zoom reset request received");
-    zoomReset.value = true;
+    viewReset.value = true;
   }
-
+  function RequestRotate() {
+    // Play rotation if it is paused
+    if (rotate.value == false) {
+      rotate.value = true;
+      rotateText.value = "Pause"; // Set text to pause
+      // Pause rotation if it is playing
+    } else if (rotate.value == true) {
+      rotate.value = false;
+      rotateText.value = "Play"; // Set text to play
+    }
+  }
   return {
     currentView,
     setView,
     zoomIn,
     zoomOut,
-    zoomReset,
+    viewReset,
+    rotate,
+    rotateText,
     RequestZoomIn,
     RequestZoomOut,
     RequestZoomStop,
-    RequestZoomReset,
+    RequestViewReset,
+    RequestRotate,
   };
 });

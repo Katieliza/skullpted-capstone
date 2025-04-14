@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted } from "vue";
+import { onMounted, ref } from "vue";
 import { useStore } from "@/stores/store";
 import MainScene from "./MainScene.vue";
 
@@ -21,9 +21,13 @@ function RequestZoomStop() {
   //console.log("Requesting zoom stop");
   store.RequestZoomStop();
 }
-function RequestZoomReset() {
-  // console.log("Requesting zoom reset");
-  store.RequestZoomReset();
+function RequestViewReset() {
+  // console.log("Requesting view reset");
+  store.RequestViewReset();
+}
+function RequestRotate() {
+  // console.log("Requesting rotate control")
+  store.RequestRotate();
 }
 </script>
 
@@ -56,7 +60,8 @@ function RequestZoomReset() {
     >
       Zoom Out
     </button>
-    <button class="controls-button" @click="RequestZoomReset">Reset Zoom</button>
+    <button class="controls-button" @click="RequestViewReset">Reset View</button>
+    <button class="controls-button" @click="RequestRotate">{{ store.rotateText }}</button>
   </div>
 
   <div id="view-controls" class="control-panel" style="left: 25%; bottom: 5%">
