@@ -3,9 +3,51 @@ import { onMounted, watch } from "vue";
 import { useStore } from "@/stores/store";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import Plastic from "file:///C:/Users/katli/Downloads/plasticTexture.jpg";
+import Metal from "file:///C:/Users/katli/Downloads/metalTexture.jpg"
 
 const store = useStore();
 
+let textureLoader;
+let model;
+
+const textureMaps = {
+  Metal: Metal,
+  Plastic: Plastic,
+};
+
+/*
+* Get the file path for selected material (texturePath)
+* Load the texture via texturePath
+* Discard old material if it exists
+* Create new material and set loaded texture as map
+* Apply material to model
+* Reset store ref
+*/
+function LoadMaterial(mat) {
+  console.log("Material to be loaded: ", mat)
+  if (textureLoader && model ) {
+    const texturePath = textureMaps[mat];
+    if (!texturePath) {
+      console.error("No texture found for material: ", mat)
+      return;
+    }
+    console.log("Loading texture from path: ", texturePath);
+    textureLoader.load(
+      texturePath,
+      texture => {
+        console.log("Texture loaded successfully")
+        if (model.material) { // 3
+          model.material.dispose();
+        }
+        const material = new THREE.MeshStandardMaterial({map: texture});
+        model.material = material;
+        store.materialSet = false;
+      }
+    )
+  }
+
+}
 onMounted(() => {
   // Init canvas, scene, renderer
   const canvas = document.getElementById("canvas");
@@ -46,6 +88,9 @@ onMounted(() => {
   controls.maxDistance = 5;
   controls.update();
 
+  // Init texture loader
+  textureLoader = new THREE.TextureLoader();
+
   const axesHelper = new THREE.AxesHelper(3);
   // scene.add(axesHelper)
 
@@ -61,7 +106,7 @@ onMounted(() => {
   // Create model
   const modelGeo = new THREE.BoxGeometry();
   const modelMat = new THREE.MeshStandardMaterial(0xffffff);
-  const model = new THREE.Mesh(modelGeo, modelMat);
+  model = new THREE.Mesh(modelGeo, modelMat);
   scene.add(model);
 
   const animate = () => {
@@ -104,7 +149,7 @@ onMounted(() => {
     controls.autoRotate = true;
   }
 
-  // Watch these functions for updates
+  // #region [colorRed]
   watch(
     () => store.zoomIn,
     (val) => {
@@ -145,19 +190,26 @@ onMounted(() => {
       }
     },
   );
+  watch(
+    () => store.materialSet,
+    (val) => {
+      if (val) {
+        LoadMaterial(store.material);
+      }
+    },
+  );
+  // #endregion
 });
 </script>
-
 <template>
   <canvas id="canvas"></canvas>
 </template>
-
 <style scoped>
-canvas {
-  display: block;
-  z-index: 0;
-  width: 100%;
-  height: 100%;
-  position: absolute;
-}
+  canvas {
+    display: block;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+  }
 </style>

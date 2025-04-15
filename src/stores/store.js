@@ -5,15 +5,23 @@ import AppIntro from "@/components/AppIntro.vue";
 export const useStore = defineStore("store", () => {
   const currentView = ref(markRaw(AppIntro)); // Mark as raw so Vue doesn't reactively track
 
+  const materialSet = ref(false);
+  const material = ref("");
   const zoomIn = ref(false);
   const zoomOut = ref(false);
   const viewReset = ref(false);
   const rotate = ref(true);
   const rotateText = ref("Pause");
 
-  function setView(viewName) {
+  function SetView(viewName) {
     currentView.value = markRaw(viewName); // Mark as raw when updating
   }
+  function RequestMaterialSet(mat) {
+    // console.log("Material set request received");
+    materialSet.value = true;
+    material.value = mat;
+  }
+
   function RequestZoomIn() {
     // console.log("Zoom in request received");
     zoomIn.value = true;
@@ -45,13 +53,16 @@ export const useStore = defineStore("store", () => {
     }
   }
   return {
+    material,
+    materialSet,
     currentView,
-    setView,
     zoomIn,
     zoomOut,
     viewReset,
     rotate,
     rotateText,
+    SetView,
+    RequestMaterialSet,
     RequestZoomIn,
     RequestZoomOut,
     RequestZoomStop,
