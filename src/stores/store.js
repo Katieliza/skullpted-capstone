@@ -5,8 +5,15 @@ import AppIntro from "@/components/AppIntro.vue";
 export const useStore = defineStore("store", () => {
   const currentView = ref(markRaw(AppIntro)); // Mark as raw so Vue doesn't reactively track
 
+  const colors = [
+    { hex: "#ff6b6b", name: "Coral Red" },
+    { hex: "#4ecdc4", name: "Turquoise" },
+  ];
+
   const materialSet = ref(false);
   const material = ref("");
+  const colorSet = ref(false);
+  const color = ref("");
   const zoomIn = ref(false);
   const zoomOut = ref(false);
   const viewReset = ref(false);
@@ -21,7 +28,11 @@ export const useStore = defineStore("store", () => {
     materialSet.value = true;
     material.value = mat;
   }
-
+  function RequestColorSet(hex) {
+    // console.log("Color set request received");
+    colorSet.value = true;
+    color.value = hex;
+  }
   function RequestZoomIn() {
     // console.log("Zoom in request received");
     zoomIn.value = true;
@@ -55,6 +66,9 @@ export const useStore = defineStore("store", () => {
   return {
     material,
     materialSet,
+    color,
+    colors,
+    colorSet,
     currentView,
     zoomIn,
     zoomOut,
@@ -63,6 +77,7 @@ export const useStore = defineStore("store", () => {
     rotateText,
     SetView,
     RequestMaterialSet,
+    RequestColorSet,
     RequestZoomIn,
     RequestZoomOut,
     RequestZoomStop,

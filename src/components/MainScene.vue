@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import Plastic from "file:///C:/Users/katli/Downloads/plasticTexture.jpg";
 import Metal from "file:///C:/Users/katli/Downloads/metalTexture.jpg"
+import { Box } from "vuetify/lib/util/box";
 
 const store = useStore();
 
@@ -16,6 +17,8 @@ const textureMaps = {
   Plastic: Plastic,
 };
 
+
+// region [colorTeal]
 /*
 * Get the file path for selected material (texturePath)
 * Load the texture via texturePath
@@ -46,8 +49,20 @@ function LoadMaterial(mat) {
       }
     )
   }
-
 }
+  // #endregion
+
+  // #region [colorOrange]
+
+function LoadColor(hex) {
+  console.log("Color to be loaded: ", hex)
+  const color = parseInt(hex.replace("#", ""), 16);
+  model.material.color.setHex(color)
+  console.log("Color loaded successfully")
+  store.colorSet = false;
+}
+// #endregion
+
 onMounted(() => {
   // Init canvas, scene, renderer
   const canvas = document.getElementById("canvas");
@@ -55,7 +70,7 @@ onMounted(() => {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 
   // Get window size
-  const windowWidth = window.innerWidth / 1.5;
+  const windowWidth = window.innerWidth;
   const windowHeight = window.innerHeight;
 
   // Calculate aspect ratio
@@ -195,6 +210,14 @@ onMounted(() => {
     (val) => {
       if (val) {
         LoadMaterial(store.material);
+      }
+    },
+  );
+  watch(
+    () => store.colorSet,
+    (val) => {
+      if (val) {
+        LoadColor(store.color);
       }
     },
   );
