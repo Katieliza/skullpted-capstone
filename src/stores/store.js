@@ -19,18 +19,9 @@ export const useStore = defineStore("store", () => {
     { hex: "#1e304f", name: "Navy Blue" },
   ];
 
-  const meshNames = ref([]);
-  const selectedMesh = ref("");
-
   const materialNames = ref([]);
   const selectedMaterial = ref("");
 
-  function SetMeshNames(names) {
-    meshNames.value = names;
-  }
-  function SetSelectedMesh(mesh) {
-    selectedMesh.value = mesh;
-  }
   function SetSelectedMaterial(mat) {
     selectedMaterial.value = mat;
   }
@@ -89,10 +80,6 @@ export const useStore = defineStore("store", () => {
     }
   }
   return {
-    meshNames,
-    selectedMesh,
-    SetMeshNames,
-    SetSelectedMesh,
     SetSelectedMaterial,
     materialNames,
     selectedMaterial,

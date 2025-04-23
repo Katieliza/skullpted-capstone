@@ -1,11 +1,14 @@
 <script setup>
 import { onMounted, watch } from "vue";
 import { useStore } from "@/stores/store";
+import { useModelStore } from "@/stores/modelStore.js";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const store = useStore();
+const modelStore = useModelStore();
+
 let scene;
 
 // Init texture loaders
@@ -61,7 +64,7 @@ function LoadMaterial(mat) {
   console.log("Material to be loaded: ", mat)
 
   if (textureLoader && model ) {
-    const selectedMesh = store.selectedMesh;
+    const selectedMesh = modelStore.selectedMesh;
     const baseName = textureMaps[mat];
 
     if (!textureLoader || !model) return;
@@ -128,7 +131,7 @@ onMounted(() => {
           console.log("Mesh: ", child.name);
         }
       });
-      store.SetMeshNames(modelMeshes);
+      modelStore.SetMeshNames(modelMeshes);
     },
     // called while loading is progressing
     function ( xhr ) {

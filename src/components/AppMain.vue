@@ -1,9 +1,12 @@
 <script setup>
 import { onMounted, ref, watch } from "vue";
 import { useStore } from "@/stores/store";
+import { useModelStore } from "@/stores/modelStore.js";
 import MainScene from "./MainScene.vue";
 
 const store = useStore();
+const modelStore = useModelStore();
+
 const materialNames = ['Matte Metal', 'Leather'];
 
 const activeToolie = ref(null)
@@ -77,7 +80,8 @@ function RequestRotate() {
   <v-select label="Material" variant="solo-filled" class="material-panel" v-model="store.selectedMaterial"
     :items="materialNames" style="position:absolute; color:white; width: 15%">
   </v-select>
-  <v-select label="Select Part" variant="solo-filled" :items="store.meshNames" v-model="store.selectedMesh"></v-select>
+  <v-select label="Select Part" variant="solo-filled" :items="modelStore.meshNames"
+    v-model="modelStore.selectedMesh"></v-select>
 </template>
 <style scoped>
 
