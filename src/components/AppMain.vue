@@ -1,11 +1,13 @@
 <script setup>
 import { onMounted, ref, watch } from "vue";
 import { useStore } from "@/stores/store";
+import { useControlStore } from "@/stores/controlStore.js";
 import { useModelStore } from "@/stores/modelStore.js";
 import { useMaterialStore } from "@/stores/materialStore.js";
 import MainScene from "./MainScene.vue";
 
 const store = useStore();
+const controlStore = useControlStore();
 const modelStore = useModelStore();
 const materialStore = useMaterialStore();
 
@@ -31,23 +33,23 @@ function RequestColorSet(hex) {
 }
 function RequestZoomIn() {
   // console.log("Requesing zoom in");
-  store.RequestZoomIn();
+  controlStore.RequestZoomIn();
 }
 function RequestZoomOut() {
   // console.log("Requesting zoom out");
-  store.RequestZoomOut();
+  controlStore.RequestZoomOut();
 }
 function RequestZoomStop() {
   //console.log("Requesting zoom stop");
-  store.RequestZoomStop();
+  controlStore.RequestZoomStop();
 }
 function RequestViewReset() {
   // console.log("Requesting view reset");
-  store.RequestViewReset();
+  controlStore.RequestViewReset();
 }
 function RequestRotate() {
   // console.log
-  store.RequestRotate();
+  controlStore.RequestRotate();
 }
 </script>
 <template>

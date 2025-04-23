@@ -1,13 +1,16 @@
 <script setup>
 import { onMounted, watch } from "vue";
 import { useStore } from "@/stores/store";
+import { useControlStore } from "@/stores/controlStore.js";
 import { useModelStore } from "@/stores/modelStore.js";
+import { useMaterialStore } from "@/stores/materialStore.js";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { useMaterialStore } from "@/stores/materialStore.js";
+
 
 const store = useStore();
+const controlStore = useControlStore();
 const modelStore = useModelStore();
 const materialStore = useMaterialStore();
 
@@ -267,7 +270,7 @@ model.position.y = 1.5; */
 
   // #region [colorRed]
   watch(
-    () => store.zoomIn,
+    () => controlStore.zoomIn,
     (val) => {
       if (val) {
         ZoomInStart();
@@ -277,7 +280,7 @@ model.position.y = 1.5; */
     },
   );
   watch(
-    () => store.zoomOut,
+    () => controlStore.zoomOut,
     (val) => {
       if (val) {
         ZoomOutStart();
@@ -287,7 +290,7 @@ model.position.y = 1.5; */
     },
   );
   watch(
-    () => store.viewReset,
+    () => controlStore.viewReset,
     (val) => {
       if (val) {
         ViewReset();
@@ -297,7 +300,7 @@ model.position.y = 1.5; */
     },
   );
   watch(
-    () => store.rotate,
+    () => controlStore.rotate,
     (val) => {
       if (val) {
         RotatePlay();
@@ -307,7 +310,7 @@ model.position.y = 1.5; */
     },
   );
   watch(
-    () => store.colorSet,
+    () => controlStore.colorSet,
     (val) => {
       if (val) {
         LoadColor(store.color);
