@@ -1,13 +1,19 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { markRaw, ref } from "vue";
+import AppIntro from "@/components/AppIntro.vue";
 
 export const useControlStore = defineStore("controlStore", () => {
+  const currentView = ref(markRaw(AppIntro)); // Mark as raw so Vue doesn't reactively track
+
   const zoomIn = ref(false);
   const zoomOut = ref(false);
   const viewReset = ref(false);
   const rotate = ref(true);
   const rotateText = ref("Pause");
 
+  function SetView(viewName) {
+    currentView.value = markRaw(viewName); // Mark as raw when updating
+  }
   function RequestZoomIn() {
     // console.log("Zoom in request received");
     zoomIn.value = true;
@@ -39,11 +45,13 @@ export const useControlStore = defineStore("controlStore", () => {
     }
   }
   return {
+    currentView,
     zoomIn,
     zoomOut,
     viewReset,
     rotate,
     rotateText,
+    SetView,
     RequestZoomIn,
     RequestZoomOut,
     RequestZoomStop,

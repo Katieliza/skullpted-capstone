@@ -1,6 +1,5 @@
 <script setup>
 import { onMounted, watch } from "vue";
-import { useStore } from "@/stores/store";
 import { useControlStore } from "@/stores/controlStore.js";
 import { useModelStore } from "@/stores/modelStore.js";
 import { useMaterialStore } from "@/stores/materialStore.js";
@@ -9,7 +8,6 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 
-const store = useStore();
 const controlStore = useControlStore();
 const modelStore = useModelStore();
 const materialStore = useMaterialStore();
@@ -112,7 +110,7 @@ function LoadColor(hex) {
   const color = parseInt(hex.replace("#", ""), 16);
   model.material.color.setHex(color)
   console.log("Color loaded successfully")
-  store.colorSet = false;
+  materialStore.colorSet = false;
 }
 // #endregion
 
@@ -313,7 +311,7 @@ model.position.y = 1.5; */
     () => controlStore.colorSet,
     (val) => {
       if (val) {
-        LoadColor(store.color);
+        LoadColor(materialStore.color);
       }
     },
   );

@@ -1,12 +1,10 @@
 <script setup>
-import { onMounted, ref, watch } from "vue";
-import { useStore } from "@/stores/store";
+import { onMounted, ref } from "vue";
 import { useControlStore } from "@/stores/controlStore.js";
 import { useModelStore } from "@/stores/modelStore.js";
 import { useMaterialStore } from "@/stores/materialStore.js";
 import MainScene from "./MainScene.vue";
 
-const store = useStore();
 const controlStore = useControlStore();
 const modelStore = useModelStore();
 const materialStore = useMaterialStore();
@@ -29,7 +27,7 @@ onMounted(() => {
 });
 function RequestColorSet(hex) {
   // console.log("Requesting color set")
-  store.RequestColorSet(hex);
+  materialStore.RequestColorSet(hex);
 }
 function RequestZoomIn() {
   // console.log("Requesing zoom in");
@@ -61,7 +59,7 @@ function RequestRotate() {
     <button class="controls-button" @mousedown="RequestZoomOut" @mouseup="RequestZoomStop" @mouseleave="RequestZoomStop"
       @touchstart="RequestZoomOut" @touchened="RequestZoomStop"> Zoom Out </button>
     <button class="controls-button" @click="RequestViewReset">Reset View</button>
-    <button class="controls-button" @click="RequestRotate">{{ store.rotateText }}</button>
+    <button class="controls-button" @click="RequestRotate">{{ controlStore.rotateText }}</button>
   </div>
   <!--
   <div id="view-controls" class="control-panel" style="left: 25%; bottom: 5%">
@@ -73,7 +71,7 @@ function RequestRotate() {
   -->
   <v-row id="color-panel">
     <div style="width: 100%; padding: 0px 0px 10px 10px; color: white;">Colors</div>
-    <div v-for="color in store.colors" :key="color.hex">
+    <div v-for="color in materialStore.colors" :key="color.hex">
       <button @click="RequestColorSet(color.hex)" class="color-button" :style="{ backgroundColor: color.hex }"
         @mouseenter="ShowToolie($event, color.hex)" @mouseleave="HideToolie">
       </button>

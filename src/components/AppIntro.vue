@@ -1,10 +1,11 @@
 <script setup>
 import { onMounted } from 'vue'
-import { useStore } from '@/stores/store'
+import { useControlStore } from '@/stores/controlStore.js'
 import IntroScene from './IntroScene.vue'
 import AppMain from './AppMain.vue'
 
-const store = useStore()
+const controlStore = useControlStore();
+
 
 onMounted(() => {
   console.log('AppIntro has been mounted')
@@ -31,7 +32,7 @@ onMounted(() => {
       </v-row>
       <v-row class="overlay-row" no-gutters>
         <!-- Switch to main view !-->
-        <v-btn @click="store.SetView(AppMain)" variant="tonal" style="color: white" size="large">Get
+        <v-btn @click="controlStore.SetView(AppMain)" variant="tonal" style="color: white" size="large">Get
           Started</v-btn></v-row>
     </div>
   </div>
