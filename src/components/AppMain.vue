@@ -1,9 +1,10 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { useStore } from "@/stores/store";
 import MainScene from "./MainScene.vue";
 
 const store = useStore();
+const materialNames = ['Matte Metal', 'Leather'];
 
 const activeToolie = ref(null)
 const toolieX = ref(0);
@@ -19,10 +20,6 @@ function HideToolie() {
 onMounted(() => {
   console.log("AppMain has been mounted");
 });
-function RequestMaterialSet(mat) {
-  // console.log("Requesting material set")
-  store.RequestMaterialSet(mat);
-}
 function RequestColorSet(hex) {
   // console.log("Requesting color set")
   store.RequestColorSet(hex);
@@ -51,7 +48,7 @@ function RequestRotate() {
 <template>
   <MainScene />
   <!--------------------Zoom control buttons --------------------->
-  <div id="zoom-controls" class="control-panel" style="padding-top: 2%; flex-direction: column; right: 35%">
+  <div id="zoom-controls" class="control-panel" style="padding-top: 2%; flex-direction: row; left: 35%">
     <button class="controls-button" @mousedown="RequestZoomIn" @mouseup="RequestZoomStop" @mouseleave="RequestZoomStop"
       @touchstart="RequestZoomIn" @touchened="RequestZoomStop"> Zoom In </button>
     <button class="controls-button" @mousedown="RequestZoomOut" @mouseup="RequestZoomStop" @mouseleave="RequestZoomStop"
@@ -59,17 +56,16 @@ function RequestRotate() {
     <button class="controls-button" @click="RequestViewReset">Reset View</button>
     <button class="controls-button" @click="RequestRotate">{{ store.rotateText }}</button>
   </div>
+  <!--
   <div id="view-controls" class="control-panel" style="left: 25%; bottom: 5%">
     <button class="controls-button">Front</button>
     <button class="controls-button">Side</button>
     <button class="controls-button">Top</button>
     <button class="controls-button">Bottom</button>
   </div>
-  <v-select label="Material" variant="solo-filled" @update:modelValue="RequestMaterialSet" :items="[`Metal`, 'Plastic']"
-    style="position:absolute; color:white; width: 15%">
-  </v-select>
+  -->
   <v-row id="color-panel">
-    <div style="width: 100%; color: white;">Colors</div>
+    <div style="width: 100%; padding: 0px 0px 10px 10px; color: white;">Colors</div>
     <div v-for="color in store.colors" :key="color.hex">
       <button @click="RequestColorSet(color.hex)" class="color-button" :style="{ backgroundColor: color.hex }"
         @mouseenter="ShowToolie($event, color.hex)" @mouseleave="HideToolie">
@@ -78,18 +74,25 @@ function RequestRotate() {
         color.name }} </div>
     </div>
   </v-row>
+  <v-select label="Material" variant="solo-filled" class="material-panel" v-model="store.selectedMaterial"
+    :items="materialNames" style="position:absolute; color:white; width: 15%">
+  </v-select>
+  <v-select label="Select Part" variant="solo-filled" :items="store.meshNames" v-model="store.selectedMesh"></v-select>
 </template>
 <style scoped>
 
   #color-panel {
     position: absolute;
     display: flex;
-    top: 40%;
+    top: 5%;
     z-index: 10;
     width: fit-content;
     height: fit-content;
     max-width: 25vw;
-    padding: 20px 0px 20px 20px
+    padding: 20px 0px 20px 20px;
+    right: 2%;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
   }
 
   .control-panel {
@@ -99,25 +102,43 @@ function RequestRotate() {
     z-index: 1;
   }
 
+  .material-panel {
+    display: absolute;
+    right: 2%;
+    top: 30%;
+  }
+
   .controls-button {
-    width: 50px;
-    height: 50px;
-    background-color: white;
-    color: #00000092;
+    width: fit-content;
+    height: fit-content;
+    background-color: rgba(255, 255, 255, 0.2);
+    padding: 10px;
+    margin: 5px;
+    color: white;
     margin-bottom: 5px;
     font-size: small;
+    border-radius: 5px;
   }
+
+  .controls-button:hover {
+    color: black
+  }
+
 
   .color-button {
     height: 40px;
     width: 40px;
+    border: 2px solid rgba(255, 255, 255, 0.434);
+    margin: 5px 10px 5px 10px
+  }
+
+  .color-button:hover {
     border: 2px solid white;
-    margin: 10px 20px 10px 20px
   }
 
   .toolie {
     position: fixed;
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(0, 0, 0, 0.7);
     color: white;
     padding: 5px 10px;
     border-radius: 4px;

@@ -6,9 +6,34 @@ export const useStore = defineStore("store", () => {
   const currentView = ref(markRaw(AppIntro)); // Mark as raw so Vue doesn't reactively track
 
   const colors = [
-    { hex: "#ff6b6b", name: "Coral Red" },
-    { hex: "#4ecdc4", name: "Turquoise" },
+    { hex: "#7f7f7f", name: "Gray" },
+    { hex: "#907d57", name: "Bronze" },
+    { hex: "#899ab1", name: "Steel Blue" },
+    { hex: "#757f6a", name: "Olive Green" },
+    { hex: "#3c3c3c", name: "Dark Gray" },
+
+    { hex: "#9a8a68", name: "Beige" },
+    { hex: "#7c4e42", name: "Brick Red" },
+    { hex: "#422121", name: "Deep Burgundy" },
+    { hex: "#606c7c", name: "Dusty Blue" },
+    { hex: "#1e304f", name: "Navy Blue" },
   ];
+
+  const meshNames = ref([]);
+  const selectedMesh = ref("");
+
+  const materialNames = ref([]);
+  const selectedMaterial = ref("");
+
+  function SetMeshNames(names) {
+    meshNames.value = names;
+  }
+  function SetSelectedMesh(mesh) {
+    selectedMesh.value = mesh;
+  }
+  function SetSelectedMaterial(mat) {
+    selectedMaterial.value = mat;
+  }
 
   const materialSet = ref(false);
   const material = ref("");
@@ -64,6 +89,13 @@ export const useStore = defineStore("store", () => {
     }
   }
   return {
+    meshNames,
+    selectedMesh,
+    SetMeshNames,
+    SetSelectedMesh,
+    SetSelectedMaterial,
+    materialNames,
+    selectedMaterial,
     material,
     materialSet,
     color,

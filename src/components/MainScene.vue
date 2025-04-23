@@ -3,57 +3,102 @@ import { onMounted, watch } from "vue";
 import { useStore } from "@/stores/store";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import Plastic from "file:///C:/Users/katli/Downloads/plasticTexture.jpg";
-import Metal from "file:///C:/Users/katli/Downloads/metalTexture.jpg"
-import { Box } from "vuetify/lib/util/box";
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const store = useStore();
+let scene;
 
-let textureLoader;
+// Init texture loaders
+const textureLoader = new THREE.TextureLoader();
+const gltfLoader = new GLTFLoader();
+
 let model;
 
+/**
+ * Auto-load texture maps for given material
+ * @param {string} basePath - Folder where teexture files are stored
+ * @param {string} baseName - Base name of the material
+ * @param {Object} mapSuffix - Optional suffix for texture types
+ * @returns {Object} - Object with loaded texture maps
+ */
+function LoadTextureMaps(basePath, baseName, mapSuffix = {
+  map: "BaseColor",
+  roughnessMap: "Roughness",
+  metalnessMap: "Metallic",
+  normalMap: "Normal"
+}) {
+
+  const maps = {};
+  for (const [key, suffix] of Object.entries(mapSuffix)) {
+    const url = `${basePath}/${baseName}_${suffix}.jpg`;
+    maps[key] = textureLoader.load(url);
+  }
+  return maps;
+}
+
+// Array of materials with their corresponding tetxture maps
 const textureMaps = {
-  Metal: Metal,
-  Plastic: Plastic,
+  "Matte Metal": "Polligon_MetalPaintedMatte",
+  "Leather": "leather_white"
 };
 
 
 // region [colorTeal]
-/*
-* Get the file path for selected material (texturePath)
-* Load the texture via texturePath
-* Discard old material if it exists
-* Create new material and set loaded texture as map
-* Apply material to model
-* Reset store ref
+/**
+ * Load and apply material with multiple texture maps to the model
+ *
+ * @param {string} mat - Display name of selected material
+ *
+ * Process:
+ * Retrieve base filename associated with selected material
+ * Use base name to load all texture maps
+ * Dispose of any existing material
+ * Create new material using the loaded maps
+ * Apply new material to the model
+ * Reset store flag to indicate material has been reset
 */
 function LoadMaterial(mat) {
   console.log("Material to be loaded: ", mat)
+
   if (textureLoader && model ) {
-    const texturePath = textureMaps[mat];
-    if (!texturePath) {
-      console.error("No texture found for material: ", mat)
+    const selectedMesh = store.selectedMesh;
+    const baseName = textureMaps[mat];
+
+    if (!textureLoader || !model) return;
+    if (!baseName) {
+      console.error("No base name found for material: ", mat)
       return;
     }
-    console.log("Loading texture from path: ", texturePath);
-    textureLoader.load(
-      texturePath,
-      texture => {
-        console.log("Texture loaded successfully")
-        if (model.material) { // 3
-          model.material.dispose();
-        }
-        const material = new THREE.MeshStandardMaterial({map: texture});
-        model.material = material;
+    const basePath = "/textures";
+    const maps = LoadTextureMaps(basePath, baseName);
+
+    model.traverse((child) => {
+      if (!child.isMesh) return;
+      if (selectedMesh && child.name !== selectedMesh) return;
+
+      if (child.material) {
+        child.material.dispose();
+      }
+
+      child.material = new THREE.MeshStandardMaterial({...maps, color: 0xffffff});
+    });
         store.materialSet = false;
       }
-    )
   }
-}
   // #endregion
 
   // #region [colorOrange]
 
+  /**
+   * Load and apply color to model's material
+   *
+   * @param hex
+   *
+   * Process:
+   * Parse hex color string to an integer
+   * Apply parsed color value to model's material
+   * Reset store flag to indicate color has been reset
+   */
 function LoadColor(hex) {
   console.log("Color to be loaded: ", hex)
   const color = parseInt(hex.replace("#", ""), 16);
@@ -63,11 +108,39 @@ function LoadColor(hex) {
 }
 // #endregion
 
+
 onMounted(() => {
   // Init canvas, scene, renderer
   const canvas = document.getElementById("canvas");
   const scene = new THREE.Scene();
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, });
+  renderer.shadowMap.enabled = true;
+
+  gltfLoader.load('models/audiotechnica_black_headphones/scene.gltf',
+    function ( gltf ) {
+      model = gltf.scene;
+      scene.add(model);
+
+      const modelMeshes = []
+      model.traverse((child) => {
+        if (child.isMesh) {
+          modelMeshes.push(child.name);
+          console.log("Mesh: ", child.name);
+        }
+      });
+      store.SetMeshNames(modelMeshes);
+    },
+    // called while loading is progressing
+    function ( xhr ) {
+      console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+    },
+    // called when loading has errors
+    function ( error ) {
+      console.log( 'An error happened' );
+    }
+  );
+/*   const cubeTextureLoader = new THREE.CubeTextureLoader();
+  scene.background = cubeTextureLoader.load(skybox) */
 
   // Get window size
   const windowWidth = window.innerWidth;
@@ -93,36 +166,59 @@ onMounted(() => {
 
   // Init perspective camera
   const camera = new THREE.PerspectiveCamera(75, windowWidth / windowHeight, 0.1, 1000);
-  camera.position.set(0, 0, 2.5);
+  camera.position.set(0, 1, 5);
 
   // Config orbit controls
   const controls = new OrbitControls(camera, canvas);
-  controls.autoRotate = true;
+  controls.autoRotate = false;
   controls.enableZoom = true;
-  controls.minDistance = 2;
+  controls.minDistance = 0;
   controls.maxDistance = 5;
   controls.update();
-
-  // Init texture loader
-  textureLoader = new THREE.TextureLoader();
 
   const axesHelper = new THREE.AxesHelper(3);
   // scene.add(axesHelper)
 
   // Init directional light & helper
-  const directionalLight = new THREE.DirectionalLight("#ffffff", 1);
+  const directionalLight = new THREE.DirectionalLight("#ffffff", 0.8);
+  directionalLight.castShadow = true;
+  directionalLight.position.z = 10;
+  directionalLight.position.y = 5;
+  directionalLight.position.x = 1;
+
   const dLightHelper = new THREE.DirectionalLightHelper(directionalLight);
-  //scene.add(dLightHelper);
+  scene.add(dLightHelper);
 
   // Init ambient light
-  const ambientLight = new THREE.AmbientLight("#ffffff", 0.5);
+  const ambientLight = new THREE.AmbientLight("#ffffff", 1);
   scene.add(directionalLight, ambientLight);
 
-  // Create model
-  const modelGeo = new THREE.BoxGeometry();
-  const modelMat = new THREE.MeshStandardMaterial(0xffffff);
+  // Init hemisphere light
+  const hemisLight = new THREE.HemisphereLight("#ffffff", 0.5);
+  //scene.add(hemisLight)
+
+ /*  // Create model;
+  const modelGeo = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+  const modelMat = new THREE.MeshStandardMaterial('#899ab1');
   model = new THREE.Mesh(modelGeo, modelMat);
-  scene.add(model);
+  model.castShadow = true;
+  model.receiveShadow = true;
+model.position.y = 1.5; */
+  //model.position.x = -1;
+
+  const gridHelper = new THREE.GridHelper();
+  //scene.add(gridHelper);
+
+  const planeGeo = new THREE.PlaneGeometry(2, 2);
+  const planeMat = new THREE.MeshStandardMaterial({
+    side: THREE.DoubleSide,
+    wireframe: false,
+  });
+  const plane = new THREE.Mesh(planeGeo, planeMat)
+  plane.rotation.x = -Math.PI / 2;
+  plane.receiveShadow = true;
+  scene.add(plane);
+
 
   const animate = () => {
     requestAnimationFrame(animate);
@@ -206,14 +302,6 @@ onMounted(() => {
     },
   );
   watch(
-    () => store.materialSet,
-    (val) => {
-      if (val) {
-        LoadMaterial(store.material);
-      }
-    },
-  );
-  watch(
     () => store.colorSet,
     (val) => {
       if (val) {
@@ -221,6 +309,13 @@ onMounted(() => {
       }
     },
   );
+  watch(
+    () => store.selectedMaterial,
+    (newMaterial) => {
+    if (newMaterial) {
+      LoadMaterial(newMaterial);
+    }
+  });
   // #endregion
 });
 </script>
