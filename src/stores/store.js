@@ -19,15 +19,6 @@ export const useStore = defineStore("store", () => {
     { hex: "#1e304f", name: "Navy Blue" },
   ];
 
-  const materialNames = ref([]);
-  const selectedMaterial = ref("");
-
-  function SetSelectedMaterial(mat) {
-    selectedMaterial.value = mat;
-  }
-
-  const materialSet = ref(false);
-  const material = ref("");
   const colorSet = ref(false);
   const color = ref("");
   const zoomIn = ref(false);
@@ -39,11 +30,7 @@ export const useStore = defineStore("store", () => {
   function SetView(viewName) {
     currentView.value = markRaw(viewName); // Mark as raw when updating
   }
-  function RequestMaterialSet(mat) {
-    // console.log("Material set request received");
-    materialSet.value = true;
-    material.value = mat;
-  }
+
   function RequestColorSet(hex) {
     // console.log("Color set request received");
     colorSet.value = true;
@@ -80,11 +67,6 @@ export const useStore = defineStore("store", () => {
     }
   }
   return {
-    SetSelectedMaterial,
-    materialNames,
-    selectedMaterial,
-    material,
-    materialSet,
     color,
     colors,
     colorSet,
@@ -95,7 +77,6 @@ export const useStore = defineStore("store", () => {
     rotate,
     rotateText,
     SetView,
-    RequestMaterialSet,
     RequestColorSet,
     RequestZoomIn,
     RequestZoomOut,

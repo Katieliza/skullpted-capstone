@@ -2,10 +2,12 @@
 import { onMounted, ref, watch } from "vue";
 import { useStore } from "@/stores/store";
 import { useModelStore } from "@/stores/modelStore.js";
+import { useMaterialStore } from "@/stores/materialStore.js";
 import MainScene from "./MainScene.vue";
 
 const store = useStore();
 const modelStore = useModelStore();
+const materialStore = useMaterialStore();
 
 const materialNames = ['Matte Metal', 'Leather'];
 
@@ -77,7 +79,7 @@ function RequestRotate() {
         color.name }} </div>
     </div>
   </v-row>
-  <v-select label="Material" variant="solo-filled" class="material-panel" v-model="store.selectedMaterial"
+  <v-select label="Material" variant="solo-filled" class="material-panel" v-model="materialStore.selectedMaterial"
     :items="materialNames" style="position:absolute; color:white; width: 15%">
   </v-select>
   <v-select label="Select Part" variant="solo-filled" :items="modelStore.meshNames"

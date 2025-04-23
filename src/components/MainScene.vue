@@ -5,9 +5,11 @@ import { useModelStore } from "@/stores/modelStore.js";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { useMaterialStore } from "@/stores/materialStore.js";
 
 const store = useStore();
 const modelStore = useModelStore();
+const materialStore = useMaterialStore();
 
 let scene;
 
@@ -85,7 +87,7 @@ function LoadMaterial(mat) {
 
       child.material = new THREE.MeshStandardMaterial({...maps, color: 0xffffff});
     });
-        store.materialSet = false;
+        materialStore.materialSet = false;
       }
   }
   // #endregion
@@ -313,7 +315,7 @@ model.position.y = 1.5; */
     },
   );
   watch(
-    () => store.selectedMaterial,
+    () => materialStore.selectedMaterial,
     (newMaterial) => {
     if (newMaterial) {
       LoadMaterial(newMaterial);
