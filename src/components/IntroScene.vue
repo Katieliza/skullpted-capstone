@@ -61,17 +61,15 @@ onMounted(() => {
   animate()
 })
 </script>
-
 <template>
   <canvas id="canvas"></canvas>
 </template>
-
 <style scoped>
-canvas {
-  display: block;
-  z-index: 0;
-  width: 100%;
-  height: 100%;
-  position: absolute;
-}
+  canvas {
+    display: block;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+  }
 </style>

@@ -7,26 +7,29 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-
+// Init stores
 const controlStore = useControlStore();
 const modelStore = useModelStore();
 const materialStore = useMaterialStore();
-
-let scene;
 
 // Init texture loaders
 const textureLoader = new THREE.TextureLoader();
 const gltfLoader = new GLTFLoader();
 
+// Init 3D model
 let model;
 
+// region [colorTeal] TEXTURE MAP LOADER
 /**
  * Auto-load texture maps for given material
+ *
  * @param {string} basePath - Folder where teexture files are stored
  * @param {string} baseName - Base name of the material
  * @param {Object} mapSuffix - Optional suffix for texture types
  * @returns {Object} - Object with loaded texture maps
  */
+// endregion
+
 function LoadTextureMaps(basePath, baseName, mapSuffix = {
   map: "BaseColor",
   roughnessMap: "Roughness",
@@ -42,33 +45,29 @@ function LoadTextureMaps(basePath, baseName, mapSuffix = {
   return maps;
 }
 
-// Array of materials with their corresponding tetxture maps
-const textureMaps = {
-  "Matte Metal": "Polligon_MetalPaintedMatte",
-  "Leather": "leather_white"
-};
 
-
-// region [colorTeal]
+// region [colorTeal] MATERIAL LOADER
 /**
- * Load and apply material with multiple texture maps to the model
+ * Load and apply material with texture maps to the selected mesh in the model.
  *
- * @param {string} mat - Display name of selected material
+ * @param {string} mat - Display name of selected material.
  *
  * Process:
- * Retrieve base filename associated with selected material
- * Use base name to load all texture maps
- * Dispose of any existing material
- * Create new material using the loaded maps
- * Apply new material to the model
- * Reset store flag to indicate material has been reset
-*/
+ * Retrieve the mesh currently selected in store.
+ * Retrieve the base filename for the selected material.
+ * Load the texture maps from the texture folder.
+ * Traverse model and apply the material to only the selected mesh.
+ * Dispose of any existing material.
+ * Update store flag to indicate material has been reset.
+**/
+// endregion
+
 function LoadMaterial(mat) {
   console.log("Material to be loaded: ", mat)
 
   if (textureLoader && model ) {
     const selectedMesh = modelStore.selectedMesh;
-    const baseName = textureMaps[mat];
+    const baseName = materialStore.GetBaseName(mat);
 
     if (!textureLoader || !model) return;
     if (!baseName) {
@@ -77,24 +76,19 @@ function LoadMaterial(mat) {
     }
     const basePath = "/textures";
     const maps = LoadTextureMaps(basePath, baseName);
-
     model.traverse((child) => {
       if (!child.isMesh) return;
       if (selectedMesh && child.name !== selectedMesh) return;
-
       if (child.material) {
         child.material.dispose();
       }
-
       child.material = new THREE.MeshStandardMaterial({...maps, color: 0xffffff});
     });
         materialStore.materialSet = false;
       }
   }
-  // #endregion
 
-  // #region [colorOrange]
-
+  // #region [colorTeal] HEX COLOR LOADER
   /**
    * Load and apply color to model's material
    *
@@ -105,6 +99,8 @@ function LoadMaterial(mat) {
    * Apply parsed color value to model's material
    * Reset store flag to indicate color has been reset
    */
+  // #endregion
+
 function LoadColor(hex) {
   console.log("Color to be loaded: ", hex)
   const color = parseInt(hex.replace("#", ""), 16);
@@ -112,8 +108,6 @@ function LoadColor(hex) {
   console.log("Color loaded successfully")
   materialStore.colorSet = false;
 }
-// #endregion
-
 
 onMounted(() => {
   // Init canvas, scene, renderer
@@ -122,31 +116,39 @@ onMounted(() => {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, });
   renderer.shadowMap.enabled = true;
 
+  // #region [colorTeal] GLTF MODEL LOADER
+  /**
+   * Load GLTF headphone model into scene
+   *
+   * Process:
+   * Use GLTFLoader to load 3D model from specified path.
+   * Add model to the scene.
+   * Traverse model to find all mesh objects.
+   * Update store with the array of mesh names for UI access.
+   */
+  // #endregion
+
   gltfLoader.load('models/audiotechnica_black_headphones/scene.gltf',
     function ( gltf ) {
       model = gltf.scene;
+      model.scale.set(4, 4, 4)
+      const boundingBox = new THREE.Box3().setFromObject(model);
+      const center = boundingBox.getCenter(new THREE.Vector3());
+
+      // Recenter the model by offsetting it to the origin
+      model.position.sub(center);  // This shifts the model so its center is at (0, 0, 0)
+
       scene.add(model);
 
       const modelMeshes = []
       model.traverse((child) => {
         if (child.isMesh) {
           modelMeshes.push(child.name);
-          console.log("Mesh: ", child.name);
         }
       });
       modelStore.SetMeshNames(modelMeshes);
     },
-    // called while loading is progressing
-    function ( xhr ) {
-      console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-    },
-    // called when loading has errors
-    function ( error ) {
-      console.log( 'An error happened' );
-    }
   );
-/*   const cubeTextureLoader = new THREE.CubeTextureLoader();
-  scene.background = cubeTextureLoader.load(skybox) */
 
   // Get window size
   const windowWidth = window.innerWidth;
@@ -172,7 +174,7 @@ onMounted(() => {
 
   // Init perspective camera
   const camera = new THREE.PerspectiveCamera(75, windowWidth / windowHeight, 0.1, 1000);
-  camera.position.set(0, 1, 5);
+  camera.position.set(0, 1, 2);
 
   // Config orbit controls
   const controls = new OrbitControls(camera, canvas);
@@ -182,16 +184,15 @@ onMounted(() => {
   controls.maxDistance = 5;
   controls.update();
 
+  // Axes & grid line helpers
+  const gridHelper = new THREE.GridHelper();
+  // scene.add(gridHelper);
   const axesHelper = new THREE.AxesHelper(3);
   // scene.add(axesHelper)
 
   // Init directional light & helper
   const directionalLight = new THREE.DirectionalLight("#ffffff", 0.8);
   directionalLight.castShadow = true;
-  directionalLight.position.z = 10;
-  directionalLight.position.y = 5;
-  directionalLight.position.x = 1;
-
   const dLightHelper = new THREE.DirectionalLightHelper(directionalLight);
   scene.add(dLightHelper);
 
@@ -199,22 +200,7 @@ onMounted(() => {
   const ambientLight = new THREE.AmbientLight("#ffffff", 1);
   scene.add(directionalLight, ambientLight);
 
-  // Init hemisphere light
-  const hemisLight = new THREE.HemisphereLight("#ffffff", 0.5);
-  //scene.add(hemisLight)
-
- /*  // Create model;
-  const modelGeo = new THREE.BoxGeometry(1.5, 1.5, 1.5);
-  const modelMat = new THREE.MeshStandardMaterial('#899ab1');
-  model = new THREE.Mesh(modelGeo, modelMat);
-  model.castShadow = true;
-  model.receiveShadow = true;
-model.position.y = 1.5; */
-  //model.position.x = -1;
-
-  const gridHelper = new THREE.GridHelper();
-  //scene.add(gridHelper);
-
+  // Create plane
   const planeGeo = new THREE.PlaneGeometry(2, 2);
   const planeMat = new THREE.MeshStandardMaterial({
     side: THREE.DoubleSide,
@@ -223,7 +209,6 @@ model.position.y = 1.5; */
   const plane = new THREE.Mesh(planeGeo, planeMat)
   plane.rotation.x = -Math.PI / 2;
   plane.receiveShadow = true;
-  scene.add(plane);
 
 
   const animate = () => {
@@ -266,7 +251,7 @@ model.position.y = 1.5; */
     controls.autoRotate = true;
   }
 
-  // #region [colorRed]
+  // #region [colorRed] WATCHERS
   watch(
     () => controlStore.zoomIn,
     (val) => {

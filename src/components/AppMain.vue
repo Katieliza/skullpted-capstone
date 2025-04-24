@@ -9,7 +9,7 @@ const controlStore = useControlStore();
 const modelStore = useModelStore();
 const materialStore = useMaterialStore();
 
-const materialNames = ['Matte Metal', 'Leather'];
+const materials = ['Matte Metal', 'Leather'];
 
 const activeToolie = ref(null)
 const toolieX = ref(0);
@@ -79,11 +79,17 @@ function RequestRotate() {
         color.name }} </div>
     </div>
   </v-row>
-  <v-select label="Material" variant="solo-filled" class="material-panel" v-model="materialStore.selectedMaterial"
-    :items="materialNames" style="position:absolute; color:white; width: 15%">
-  </v-select>
-  <v-select label="Select Part" variant="solo-filled" :items="modelStore.meshNames"
-    v-model="modelStore.selectedMesh"></v-select>
+  <v-row id="select-container">
+    <div class="selector" style="margin-bottom: 100px">
+      <v-select label="Material" variant="outlined" v-model="materialStore.selectedMaterial"
+        :items="materialStore.displayNames" :menu-props="{ maxHeight: '100px' }">
+      </v-select>
+    </div>
+    <div class="selector">
+      <v-select label="Select Part" variant="outlined" :items="modelStore.meshNames" v-model="modelStore.selectedMesh"
+        :menu-props="{ maxHeight: '100px' }"></v-select>
+    </div>
+  </v-row>
 </template>
 <style scoped>
 
@@ -101,17 +107,29 @@ function RequestRotate() {
     border-radius: 5px;
   }
 
+  #select-container {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+    width: 25vw;
+    max-height: 50vh;
+
+    right: 2%;
+    top: 40%;
+    padding: 20px;
+    border-radius: 5px;
+  }
+
+  .selector {
+    width: 100%;
+  }
+
   .control-panel {
     position: absolute;
     display: flex;
     align-content: center;
     z-index: 1;
-  }
-
-  .material-panel {
-    display: absolute;
-    right: 2%;
-    top: 30%;
   }
 
   .controls-button {
@@ -127,7 +145,7 @@ function RequestRotate() {
   }
 
   .controls-button:hover {
-    color: black
+    border: 1px solid white
   }
 
 
