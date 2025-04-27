@@ -78,11 +78,14 @@ function LoadMaterial(mat) {
     const maps = LoadTextureMaps(basePath, baseName);
     model.traverse((child) => {
       if (!child.isMesh) return;
+
       if (selectedMesh && child.name !== selectedMesh) return;
       if (child.material) {
         child.material.dispose();
       }
+
       child.material = new THREE.MeshStandardMaterial({...maps, color: 0xffffff});
+
     });
         materialStore.materialSet = false;
       }
@@ -115,6 +118,7 @@ onMounted(() => {
   const scene = new THREE.Scene();
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, });
   renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   // #region [colorTeal] GLTF MODEL LOADER
   /**
@@ -122,27 +126,31 @@ onMounted(() => {
    *
    * Process:
    * Use GLTFLoader to load 3D model from specified path.
+   * Recenter the model by offsetting it to the origin.
+   * Shift the model so its center is at (0, 0, 0).
    * Add model to the scene.
    * Traverse model to find all mesh objects.
    * Update store with the array of mesh names for UI access.
    */
   // #endregion
 
-  gltfLoader.load('models/audiotechnica_black_headphones/scene.gltf',
+  gltfLoader.load('models/skullpted_headphones/scene.gltf',
     function ( gltf ) {
       model = gltf.scene;
-      model.scale.set(4, 4, 4)
-      const boundingBox = new THREE.Box3().setFromObject(model);
-      const center = boundingBox.getCenter(new THREE.Vector3());
+      model.scale.set(1, 1, 1)
 
-      // Recenter the model by offsetting it to the origin
-      model.position.sub(center);  // This shifts the model so its center is at (0, 0, 0)
-
+      const bbox = new THREE.Box3().setFromObject(model);
+      const center = bbox.getCenter(new THREE.Vector3());
+      model.position.sub(center);
+      model.castShadow = true;
+      model.receiveShadow = true;
       scene.add(model);
 
       const modelMeshes = []
       model.traverse((child) => {
         if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
           modelMeshes.push(child.name);
         }
       });
@@ -174,47 +182,67 @@ onMounted(() => {
 
   // Init perspective camera
   const camera = new THREE.PerspectiveCamera(75, windowWidth / windowHeight, 0.1, 1000);
-  camera.position.set(0, 1, 2);
+  camera.position.set(0, 0, 5);
 
-  // Config orbit controls
+  // Orbit controls
   const controls = new OrbitControls(camera, canvas);
   controls.autoRotate = false;
   controls.enableZoom = true;
-  controls.minDistance = 0;
-  controls.maxDistance = 5;
+  controls.enablePan = false;
+  controls.minDistance = 3; // Closest zoom level
+  controls.maxDistance = 8; // Furthest zoom level
+
+
+  controls.target.set(0,0,0);
   controls.update();
 
-  // Axes & grid line helpers
-  const gridHelper = new THREE.GridHelper();
-  // scene.add(gridHelper);
+  // Axes visualizer
   const axesHelper = new THREE.AxesHelper(3);
-  // scene.add(axesHelper)
 
-  // Init directional light & helper
-  const directionalLight = new THREE.DirectionalLight("#ffffff", 0.8);
-  directionalLight.castShadow = true;
-  const dLightHelper = new THREE.DirectionalLightHelper(directionalLight);
-  scene.add(dLightHelper);
+  // Ambient Light (soft global light)
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+  scene.add(ambientLight);
 
-  // Init ambient light
-  const ambientLight = new THREE.AmbientLight("#ffffff", 1);
-  scene.add(directionalLight, ambientLight);
+  // Key light (main bright light)
+  const keyLight = new THREE.DirectionalLight(0xffffff, 1.0);
+  keyLight.position.set(5, 10, 5);
+  keyLight.castShadow = true;
+  scene.add(keyLight)
+  const keyLightHelper = new THREE.DirectionalLightHelper(keyLight);
+  scene.add(keyLightHelper)
 
-  // Create plane
-  const planeGeo = new THREE.PlaneGeometry(2, 2);
-  const planeMat = new THREE.MeshStandardMaterial({
-    side: THREE.DoubleSide,
-    wireframe: false,
-  });
-  const plane = new THREE.Mesh(planeGeo, planeMat)
-  plane.rotation.x = -Math.PI / 2;
-  plane.receiveShadow = true;
+  // Fill Light (secondary top left light)
+  const fillLight = new THREE.DirectionalLight(0xffffff, 0.2);
+  fillLight.position.set(-5, 5, 5);
+  fillLight.castShadow = false;
 
+  // Rim Light (backlit light to crispen edges)
+  const rimLight = new THREE.DirectionalLight(0xffffff, 0.6);
+  rimLight.position.set(0, 5, -5);
+  rimLight.castShadow = false;
+
+  // Floor (only show shadows)
+  const floorGeo = new THREE.PlaneGeometry(50, 50);
+  const floorMat = new THREE.ShadowMaterial({ opacity: 0.3 });
+  const floor = new THREE.Mesh(floorGeo, floorMat);
+  floor.rotation.x = -Math.PI / 2; // Lie the plane flat
+  floor.position.y = -2.5; // Position below model
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+/*
+  CUBE FOR TESTING
+  const cg = new THREE.BoxGeometry(1, 1, 1);
+  const cm = new THREE.MeshStandardMaterial({color: 0x00ff00})
+  const c = new THREE.Mesh(cg, cm);
+  c.castShadow = true;
+  scene.add(c) */
 
   const animate = () => {
     requestAnimationFrame(animate);
-    controls.update(); // Update orbit controls
-    renderer.render(scene, camera); // Update renderer
+    controls.update();
+    renderer.render(scene, camera);
+
   };
   animate();
 

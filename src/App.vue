@@ -15,7 +15,11 @@ const controlStore = useControlStore()
     padding: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgb(51, 51, 51);
+    background-color: rgb(170, 170, 170);
     color: white;
+  }
+
+  .vue-devtools__anchor {
+    display: none !important;
   }
 </style>
