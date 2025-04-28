@@ -58,7 +58,8 @@ onMounted(() => {
 <template>
   <MainScene />
   <!--------------------Zoom control buttons --------------------->
-  <div id="zoom-controls" class="control-panel" style="padding-top: 2%; flex-direction: row; left: 35%">
+  <div id="zoom-controls" class="control-panel"
+    style="height: fit-content; width: 100vw; flex-direction: row; justify-content: center; bottom: 5%;">
     <button class="controls-button" @mousedown="RequestZoomIn" @mouseup="RequestZoomStop" @mouseleave="RequestZoomStop"
       @touchstart="RequestZoomIn" @touchened="RequestZoomStop"> Zoom In </button>
     <button class="controls-button" @mousedown="RequestZoomOut" @mouseup="RequestZoomStop" @mouseleave="RequestZoomStop"
@@ -76,7 +77,6 @@ onMounted(() => {
   -->
   <v-row id="color-panel">
     <div style="width: 100%; padding: 0px 0px 10px 10px; color: white;">Colors</div>
-    <button @click="ResetColor">Reset Color</button>
     <div v-for="color in materialStore.colors" :key="color.hex">
       <button @click="RequestColorSet(color.hex)" class="color-button" :style="{ backgroundColor: color.hex }"
         @mouseenter="ShowToolie($event, color.hex)" @mouseleave="HideToolie">
@@ -84,16 +84,18 @@ onMounted(() => {
       <div class="toolie" v-if="activeToolie === color.hex" :style="{ top: toolieY + 'px', left: toolieX + 'px' }"> {{
         color.name }} </div>
     </div>
+    <button @click="ResetColor" class="controls-button" style="background-color: rgba(0,0,0,0.5) !important">Reset
+      Color</button>
   </v-row>
   <v-row id="select-container">
     <div class="selector" style="margin-bottom: 100px">
-      <v-select label="Material" variant="outlined" v-model="materialStore.selectedMaterial"
-        :items="materialStore.displayNames" :menu-props="{ maxHeight: '100px' }">
+      <v-select label="Material" v-model="materialStore.selectedMaterial" :items="materialStore.displayNames"
+        :menu-props="{ maxHeight: '100px' }">
       </v-select>
     </div>
     <div class="selector">
-      <v-select label="Select Part" variant="outlined" :items="modelStore.meshNames" v-model="modelStore.selectedMesh"
-        :menu-props="{ maxHeight: '100px' }"></v-select>
+      <v-select label="Select Part" :items="modelStore.meshNames" v-model="modelStore.selectedMesh"
+        :menu-props="{ maxHeight: '150px' }"></v-select>
     </div>
   </v-row>
 </template>
@@ -120,15 +122,15 @@ onMounted(() => {
     z-index: 10;
     width: 25vw;
     max-height: 50vh;
-
     right: 2%;
-    top: 40%;
+    top: 35%;
     padding: 20px;
     border-radius: 5px;
   }
 
   .selector {
     width: 100%;
+    border-radius: 5px;
   }
 
   .control-panel {
@@ -151,7 +153,7 @@ onMounted(() => {
   }
 
   .controls-button:hover {
-    border: 1px solid white
+    border: 1px solid white;
   }
 
 
