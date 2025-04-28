@@ -192,7 +192,9 @@ onMounted(() => {
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   // GUI
-  const gui = new DAT.GUI();
+  const gui = new DAT.GUI( { autoPlace: false});
+  document.getElementById('gui-container').appendChild(gui.domElement);
+
   const guiOptions = {
     color: "#ffffff",
   }
@@ -275,7 +277,7 @@ onMounted(() => {
 
   // Orbit controls
   const controls = new OrbitControls(camera, canvas);
-  controls.autoRotate = false;
+  controls.autoRotate = true;
   controls.enableZoom = true;
   controls.enablePan = false;
   controls.minDistance = 3; // Closest zoom level
@@ -293,7 +295,7 @@ onMounted(() => {
   scene.add(ambientLight);
 
   // Key light (main bright light)
-  const keyLight = new THREE.DirectionalLight(0xffffff, 1.0);
+  const keyLight = new THREE.DirectionalLight(0xffffff, 2.0);
   keyLight.position.set(5, 10, 5);
   keyLight.castShadow = true;
   scene.add(keyLight)
@@ -437,6 +439,7 @@ onMounted(() => {
 </script>
 <template>
   <canvas id="canvas"></canvas>
+  <div id="gui-container"></div>
 </template>
 <style scoped>
   canvas {
@@ -445,5 +448,12 @@ onMounted(() => {
     width: 100%;
     height: 100%;
     position: absolute;
+  }
+
+  #gui-container {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
   }
 </style>
