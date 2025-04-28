@@ -16,7 +16,9 @@ export const useMaterialStore = defineStore("materialStore", () => {
   ];
 
   const color = ref("");
+
   const colorSet = ref(false);
+  const colorReset = ref(false);
   const selectedMaterial = ref("");
 
   const materials = [
@@ -32,7 +34,10 @@ export const useMaterialStore = defineStore("materialStore", () => {
     colorSet.value = true;
     color.value = hex;
   }
-
+  function RequestColorReset() {
+    // console.log("Color reset request received");
+    colorReset.value = true;
+  }
   function SetSelectedMaterial(mat) {
     selectedMaterial.value = mat;
   }
@@ -46,10 +51,12 @@ export const useMaterialStore = defineStore("materialStore", () => {
     color,
     colors,
     colorSet,
+    colorReset,
     selectedMaterial,
     materials,
     displayNames,
     RequestColorSet,
+    RequestColorReset,
     SetSelectedMaterial,
     GetBaseName,
   };

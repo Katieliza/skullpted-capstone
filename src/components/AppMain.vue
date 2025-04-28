@@ -22,12 +22,14 @@ function ShowToolie(e, hex) {
 function HideToolie() {
   activeToolie.value = null;
 }
-onMounted(() => {
-  console.log("AppMain has been mounted");
-});
+
 function RequestColorSet(hex) {
   // console.log("Requesting color set")
   materialStore.RequestColorSet(hex);
+}
+function ResetColor() {
+    // console.log("Requesting color reset")
+  materialStore.RequestColorReset();
 }
 function RequestZoomIn() {
   // console.log("Requesing zoom in");
@@ -49,6 +51,9 @@ function RequestRotate() {
   // console.log
   controlStore.RequestRotate();
 }
+onMounted(() => {
+  console.log("AppMain has been mounted");
+});
 </script>
 <template>
   <MainScene />
@@ -71,6 +76,7 @@ function RequestRotate() {
   -->
   <v-row id="color-panel">
     <div style="width: 100%; padding: 0px 0px 10px 10px; color: white;">Colors</div>
+    <button @click="ResetColor">Reset Color</button>
     <div v-for="color in materialStore.colors" :key="color.hex">
       <button @click="RequestColorSet(color.hex)" class="color-button" :style="{ backgroundColor: color.hex }"
         @mouseenter="ShowToolie($event, color.hex)" @mouseleave="HideToolie">

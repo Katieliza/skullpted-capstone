@@ -45,7 +45,6 @@ function LoadTextureMaps(basePath, baseName, mapSuffix = {
   return maps;
 }
 
-
 // region [colorTeal] MATERIAL LOADER
 /**
  * Load and apply material with texture maps to the selected mesh in the model.
@@ -93,23 +92,92 @@ function LoadMaterial(mat) {
 
   // #region [colorTeal] HEX COLOR LOADER
   /**
-   * Load and apply color to model's material
+   * Load and apply color to model's material.
    *
    * @param hex
    *
    * Process:
-   * Parse hex color string to an integer
-   * Apply parsed color value to model's material
-   * Reset store flag to indicate color has been reset
+   * Parse hex color string to an integer.
+   * Apply parsed color value to model's material.
+   * Update store flag to indicate color has been set.
    */
   // #endregion
 
 function LoadColor(hex) {
   console.log("Color to be loaded: ", hex)
+  const selectedMesh = modelStore.selectedMesh;
   const color = parseInt(hex.replace("#", ""), 16);
-  model.material.color.setHex(color)
-  console.log("Color loaded successfully")
+  var found = false;
+  if (!model) {
+    console.error("Model not loaded");
+    return;
+  }
+  if (!selectedMesh) {
+    console.error("No mesh selected");
+    return;
+  }
+
+  model.traverse((child) => {
+    if (child.isMesh && child.name === selectedMesh) {
+      if (child.material.isMaterial) {
+        child.material = child.material.clone();
+      };
+      found = true;
+      child.material.color.setHex(color);
+    }
+  });
+
+  if (found) {
+    console.log(`Color ${hex} applied successfully to ${selectedMesh}`);
+  } else {
+    console.error(`Could not find mesh: ${selectedMesh}`);
+  };
   materialStore.colorSet = false;
+}
+
+// #region [colorTeal] RESET COLOR
+/**
+ * Reset the color of the selected mesh within the model.
+ *
+ * Process:
+ * Verify the model and selected mesh are accessible.
+ * Traverse the model to find the matching mesh.
+ * Clone existing material to prevent shared material editing.
+ * Set the color to white (default color).
+ * Update store flag to indicate color has been reset.
+ */
+// #endregion
+
+function ResetColor() {
+  console.log("Resetting color...")
+  const selectedMesh = modelStore.selectedMesh;
+  var found = false;
+
+  if (!model) {
+    console.error("Model not loaded");
+    return;
+  };
+  if (!selectedMesh) {
+    console.error("No mesh selected");
+    return;
+  };
+
+  model.traverse((child)=> {
+    if (child.isMesh && child.name === selectedMesh) {
+      if (child.material.isMaterial) {
+        child.material = child.material.clone();
+      };
+      found = true;
+      child.material.color.setHex(0xffffff);
+    }
+  });
+
+  if(found) {
+    console.log(`Color reset successfully for ${selectedMesh}`);
+  } else {
+    console.error(`Could not find mesh: ${selectedMesh}`);
+  };
+  materialStore.colorReset = false;
 }
 
 onMounted(() => {
@@ -321,10 +389,18 @@ onMounted(() => {
     },
   );
   watch(
-    () => controlStore.colorSet,
+    () => materialStore.colorSet,
     (val) => {
       if (val) {
         LoadColor(materialStore.color);
+      }
+    },
+  );
+  watch(
+    () => materialStore.colorReset,
+    (val) => {
+      if (val) {
+        ResetColor();
       }
     },
   );
