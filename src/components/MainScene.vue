@@ -4,6 +4,7 @@ import { useControlStore } from "@/stores/controlStore.js";
 import { useModelStore } from "@/stores/modelStore.js";
 import { useMaterialStore } from "@/stores/materialStore.js";
 import * as THREE from "three";
+import * as DAT from "dat.gui";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
@@ -181,12 +182,32 @@ function ResetColor() {
 }
 
 onMounted(() => {
-  // Init canvas, scene, renderer
+  // Canvas & Scene
   const canvas = document.getElementById("canvas");
   const scene = new THREE.Scene();
+
+  // Renderer
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, });
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  // GUI
+  const gui = new DAT.GUI();
+  const guiOptions = {
+    color: "#ffffff",
+  }
+  const colorController = gui.addColor(guiOptions, "color").name("Custom Color");
+
+  colorController.onChange((value) => {
+    const selectedMesh = modelStore.selectedMesh;
+    if (model) {
+      model.traverse((child) => {
+        if (child.isMesh) {
+          child.material.color.set(value);
+        }
+      });
+    }
+  })
 
   // #region [colorTeal] GLTF MODEL LOADER
   /**
