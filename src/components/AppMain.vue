@@ -22,10 +22,14 @@ function ShowToolie(e, hex) {
 function HideToolie() {
   activeToolie.value = null;
 }
+function HandleMouseEnter(e, hex) {
+  ShowToolie(e, hex)
+  materialStore.SetPreviewColor(hex);
+}
+function HandleMouseLeave(e) {
+  HideToolie()
+  materialStore.ClearPreviewColor();
 
-function RequestColorSet(hex) {
-  // console.log("Requesting color set")
-  materialStore.RequestColorSet(hex);
 }
 function ResetColor() {
     // console.log("Requesting color reset")
@@ -78,8 +82,9 @@ onMounted(() => {
   <v-row id="color-panel">
     <div style="width: 100%; padding: 0px 0px 10px 10px; color: white;">Colors</div>
     <div v-for="color in materialStore.colors" :key="color.hex">
-      <button @click="RequestColorSet(color.hex)" class="color-button" :style="{ backgroundColor: color.hex }"
-        @mouseenter="ShowToolie($event, color.hex)" @mouseleave="HideToolie">
+      <button @click="materialStore.activeColor = color.hex" class="color-button"
+        :style="{ backgroundColor: color.hex }" @mouseenter="(e => HandleMouseEnter(e, color.hex))"
+        @mouseleave="() => HandleMouseLeave(color.hex)">
       </button>
       <div class="toolie" v-if="activeToolie === color.hex" :style="{ top: toolieY + 'px', left: toolieX + 'px' }"> {{
         color.name }} </div>
@@ -94,7 +99,7 @@ onMounted(() => {
       </v-select>
     </div>
     <div class="selector">
-      <v-select label="Select Part" :items="modelStore.meshNames" v-model="modelStore.selectedMesh"
+      <v-select label="Select Part" :items="modelStore.meshNames" v-model="modelStore.activeMesh"
         :menu-props="{ maxHeight: '150px' }"></v-select>
     </div>
   </v-row>

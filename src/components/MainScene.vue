@@ -66,7 +66,7 @@ function LoadMaterial(mat) {
   console.log("Material to be loaded: ", mat)
 
   if (textureLoader && model ) {
-    const selectedMesh = modelStore.selectedMesh;
+    const activeMesh = modelStore.activeMesh;
     const baseName = materialStore.GetBaseName(mat);
 
     if (!textureLoader || !model) return;
@@ -79,7 +79,7 @@ function LoadMaterial(mat) {
     model.traverse((child) => {
       if (!child.isMesh) return;
 
-      if (selectedMesh && child.name !== selectedMesh) return;
+      if (activeMesh && child.name !== activeMesh) return;
       if (child.material) {
         child.material.dispose();
       }
@@ -90,6 +90,77 @@ function LoadMaterial(mat) {
         materialStore.materialSet = false;
       }
   }
+var currentAnimation = null;
+function EaseInOutCubic(x) {
+  return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3)/2;
+}
+
+// Utility function to find a mesh by name
+function findMeshByName(meshName) {
+  let targetMesh = null;
+  if (!model) return null;
+
+  model.traverse((child) => {
+    if (child.isMesh && child.name === meshName) {
+      targetMesh = child;
+    }
+  });
+
+  return targetMesh;
+}
+
+// Function to animate color changes with smooth transitions
+function LerpColors(meshesToAnimate, endHex, duration = 0.5) {
+  // Cancel any existing animation
+  if (currentAnimation) {
+    cancelAnimationFrame(currentAnimation);
+    currentAnimation = null;
+  }
+
+  // Convert end hex to THREE.Color
+  const endColor = new THREE.Color(endHex);
+  let startTime = null;
+
+  // Store starting colors for each mesh
+  const startingColors = meshesToAnimate.map(mesh => {
+    // Ensure mesh has proper material
+    if (mesh.material && !mesh.material._isCloned) {
+      mesh.material = mesh.material.clone();
+      mesh.material._isCloned = true;
+    }
+    return new THREE.Color(mesh.material.color.getHex());
+  });
+
+  // Animation function
+  function animate(time) {
+    if (!startTime) startTime = time;
+
+    const elapsed = (time - startTime) / 1000;
+    const progress = Math.min(elapsed / duration, 1);
+    const ease = EaseInOutCubic(progress);
+
+    // Update all meshes
+    for (let i = 0; i < meshesToAnimate.length; i++) {
+      const mesh = meshesToAnimate[i];
+      const startColor = startingColors[i];
+
+      if (mesh && mesh.material) {
+        const currentColor = new THREE.Color();
+        currentColor.lerpColors(startColor, endColor, ease);
+        mesh.material.color.copy(currentColor);
+      }
+    }
+
+    if (progress < 1) {
+      currentAnimation = requestAnimationFrame(animate);
+    } else {
+      currentAnimation = null;
+    }
+  }
+
+  currentAnimation = requestAnimationFrame(animate);
+}
+
 
   // #region [colorTeal] HEX COLOR LOADER
   /**
@@ -104,37 +175,61 @@ function LoadMaterial(mat) {
    */
   // #endregion
 
+// Main function to load a color onto selected or all meshes
 function LoadColor(hex) {
-  console.log("Color to be loaded: ", hex)
-  const selectedMesh = modelStore.selectedMesh;
-  const color = parseInt(hex.replace("#", ""), 16);
-  var found = false;
+  console.log("Color to be loaded:", hex);
+  const activeMeshName = modelStore.activeMesh;
+
   if (!model) {
     console.error("Model not loaded");
     return;
   }
-  if (!selectedMesh) {
-    console.error("No mesh selected");
-    return;
+
+  // Prepare array of meshes to animate
+  let meshesToAnimate = [];
+
+  // If a specific mesh is selected, only animate that one
+  if (activeMeshName) {
+    const targetMesh = findMeshByName(activeMeshName);
+    if (targetMesh) {
+      meshesToAnimate = [targetMesh];
+      console.log(`Applying color ${hex} to selected mesh: ${activeMeshName}`);
+    } else {
+      console.error(`Could not find mesh: ${activeMeshName}`);
+      return;
+    }
+  }
+  // If no mesh is selected, apply to all meshes in meshNames
+  else {
+    console.log('No mesh selected - applying to all meshes');
+
+    // If meshNames is populated, use those names
+    if (modelStore.meshNames && modelStore.meshNames.length > 0) {
+      modelStore.meshNames.forEach(meshName => {
+        const mesh = findMeshByName(meshName);
+        if (mesh) {
+          meshesToAnimate.push(mesh);
+        }
+      });
+    }
+    // Fallback: if meshNames is empty, find all meshes in the model
+    else {
+      model.traverse((child) => {
+        if (child.isMesh && child.material) {
+          meshesToAnimate.push(child);
+        }
+      });
+    }
   }
 
-  model.traverse((child) => {
-    if (child.isMesh && child.name === selectedMesh) {
-      if (child.material.isMaterial) {
-        child.material = child.material.clone();
-      };
-      found = true;
-      child.material.color.setHex(color);
-    }
-  });
-
-  if (found) {
-    console.log(`Color ${hex} applied successfully to ${selectedMesh}`);
+  // If we have meshes to animate, do it
+  if (meshesToAnimate.length > 0) {
+    LerpColors(meshesToAnimate, hex, 0.5);
   } else {
-    console.error(`Could not find mesh: ${selectedMesh}`);
-  };
-  materialStore.colorSet = false;
+    console.warn("No meshes found to apply color to");
+  }
 }
+
 
 // #region [colorTeal] RESET COLOR
 /**
@@ -151,20 +246,20 @@ function LoadColor(hex) {
 
 function ResetColor() {
   console.log("Resetting color...")
-  const selectedMesh = modelStore.selectedMesh;
+  const activeMesh = modelStore.activeMesh;
   var found = false;
 
   if (!model) {
     console.error("Model not loaded");
     return;
   };
-  if (!selectedMesh) {
+  if (!activeMesh) {
     console.error("No mesh selected");
     return;
   };
 
   model.traverse((child)=> {
-    if (child.isMesh && child.name === selectedMesh) {
+    if (child.isMesh && child.name === activeMesh) {
       if (child.material.isMaterial) {
         child.material = child.material.clone();
       };
@@ -174,9 +269,9 @@ function ResetColor() {
   });
 
   if(found) {
-    console.log(`Color reset successfully for ${selectedMesh}`);
+    console.log(`Color reset successfully for ${activeMesh}`);
   } else {
-    console.error(`Could not find mesh: ${selectedMesh}`);
+    console.error(`Could not find mesh: ${activeMesh}`);
   };
   materialStore.colorReset = false;
 }
@@ -201,7 +296,7 @@ onMounted(() => {
   const colorController = gui.addColor(guiOptions, "color").name("Custom Color");
 
   colorController.onChange((value) => {
-    const selectedMesh = modelStore.selectedMesh;
+    const activeMesh = modelStore.activeMesh;
     if (model) {
       model.traverse((child) => {
         if (child.isMesh) {
@@ -434,6 +529,17 @@ onMounted(() => {
       LoadMaterial(newMaterial);
     }
   });
+watch(
+  () => [materialStore.previewColor, materialStore.activeColor],
+  ([preview, active]) => {
+    if (preview) {
+      LoadColor(preview);
+    } else {
+      LoadColor(active);
+    }
+  },
+  { immediate: true }
+);
   // #endregion
 });
 </script>

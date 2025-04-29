@@ -3,19 +3,19 @@ import { ref } from "vue";
 
 export const useModelStore = defineStore("modelStore", () => {
   const meshNames = ref([]);
-  const selectedMesh = ref("");
+  const activeMesh = ref("");
 
   function SetMeshNames(names) {
     meshNames.value = names;
   }
-  function SetSelectedMesh(mesh) {
-    selectedMesh.value = mesh;
+  function SetActiveMesh(mesh) {
+    activeMesh.value = mesh;
   }
 
   return {
     meshNames,
-    selectedMesh,
+    activeMesh,
     SetMeshNames,
-    SetSelectedMesh,
+    SetActiveMesh,
   };
 });
