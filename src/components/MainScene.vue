@@ -22,12 +22,27 @@ let model;
 
 // region [colorTeal] TEXTURE MAP LOADER
 /**
- * Auto-load texture maps for given material
+ * Auto-load texture maps for given material.
  *
- * @param {string} basePath - Folder where teexture files are stored
- * @param {string} baseName - Base name of the material
- * @param {Object} mapSuffix - Optional suffix for texture types
- * @returns {Object} - Object with loaded texture maps
+ * @param {string} basePath - Base directory path where texture files are located
+ * @param {string} baseName - Base filename for the texture set
+ * @param {Object} mapSuffix - Object map material properties to filename suffixes
+ * @param {string} mapSuffix.map - Suffix for the diffuse/color map (default: "BaseColor")
+ * @param {string} mapSuffix.roughnessMap - Suffix for the roughness map (default: "Roughness")
+ * @param {string} mapSuffix.metalnessMap - Suffix for the metalness map (default: "Metallic")
+ * @param {string} mapSuffix.normalMap - Suffix for the normal map (default: "Normal")
+ * @returns {Object} Object containing loaded texture maps keyed by material property names
+ *
+ * Process:
+ * Init empty maps object to store loaded textures.
+ * Iterate through each entry in the mapSuffix object:
+ *    - Extract the property name (key) and suffix value.
+ *    - Construct the full URL path using pattern: basePath/baseName_suffix.jpg
+ *    - Load the texture using textureLoader.
+ *    - Store the loaded texture in the maps object.
+ * Return the completed maps object containing all loaded textures.
+ *
+ * @requires textureLoader - THREE.TextureLoader instance for loading image files
  */
 // endregion
 
@@ -48,18 +63,27 @@ function LoadTextureMaps(basePath, baseName, mapSuffix = {
 
 // region [colorTeal] MATERIAL LOADER
 /**
- * Load and apply material with texture maps to the selected mesh in the model.
+ * Loads material onto the active mesh or all meshes if none are selected.
  *
- * @param {string} mat - Display name of selected material.
+ * @param {string} mat - Display name of material to be loaded.
  *
  * Process:
- * Retrieve the mesh currently selected in store.
+ * Retrieve the active mesh from modelStore.
  * Retrieve the base filename for the selected material.
  * Load the texture maps from the texture folder.
- * Traverse model and apply the material to only the selected mesh.
+ * Traverse through all meshes in the model.
+ * Skip non-mesh objects or meshes that don't match the active mesh.
  * Dispose of any existing material.
+ * Create an apply new material with the loaded textures.
+ * Update material state in the store.
  * Update store flag to indicate material has been reset.
-**/
+ *
+ * @requires textureLoader - THREE.TextureLoader instance for loading image files
+ * @requires model - The loaded 3D model must be available.
+ * @requires modelStore - Contains active mesh information.
+ * @requires materialStore - Contains material information.
+ * @requires LoadTextureMaps - Function to load texture maps based on material name.
+ */
 // endregion
 
 function LoadMaterial(mat) {
@@ -78,37 +102,143 @@ function LoadMaterial(mat) {
     const maps = LoadTextureMaps(basePath, baseName);
     model.traverse((child) => {
       if (!child.isMesh) return;
-
       if (activeMesh && child.name !== activeMesh) return;
+
       if (child.material) {
         child.material.dispose();
       }
-
       child.material = new THREE.MeshStandardMaterial({...maps, color: 0xffffff});
-
     });
         materialStore.materialSet = false;
       }
   }
+
+  // #region [colorTeal] HEX COLOR LOADER
+    /**
+     * Apply a color to the active mesh or entire model if no active mesh.
+     *
+     * @param {number} hex - Target color as a hexadecimal number
+     *
+     * Process:
+     * Retrieve the active mesh name from modelStore.
+     * Verify the model is loaded, exit with error if not.
+     * Init empty array to track meshes to be animated.
+     * Determine which meshes to animate based on selection state:
+     *    a. If a specific mesh is selected (activeMeshName exists):
+     *      - Find the target mesh by name.
+     *      - Add only this mesh to the animation array if found.
+     *      - Log error and exit if mesh not found.
+     *    b. If no specific mesh is selected:
+     *      - Check if modelStore.meshNames array exists and has entries:
+     *         - Find each mesh by name and add to animation array if found.
+     *       - If meshNames is empty, fallback to traversing all meshes:
+     *         - Add all mesh objects with materials to animation array.
+     * Check if any meshes were found to animate:
+     *    a. If meshes found, call LerpColors to animate color transition.
+     *    b. If no meshes found, log warning.
+     *
+     * @requires model - Loaded 3D model
+     * @requires modelStore - Store with mesh information
+     * @requires FindMeshByName - Function to locate meshes by name
+     * @requires LerpColors - Function to animate color transitions
+     */
+    // #endregion
+
+  function LoadColor(hex) {
+    // console.log("Color to be loaded:", hex);
+    const activeMeshName = modelStore.activeMesh;
+    if (!model) {
+      console.error("Model not loaded");
+      return;
+    }
+    var meshesToAnimate = [];
+    // If a specific mesh is selected, only animate that one
+    if (activeMeshName) {
+      const targetMesh = FindMeshByName(activeMeshName);
+      if (targetMesh) {
+        meshesToAnimate = [targetMesh];
+        console.log(`Applying color ${hex} to selected mesh: ${activeMeshName}`);
+      } else {
+        console.error(`Could not find mesh: ${activeMeshName}`);
+        return;
+      }
+    }
+    // If no mesh is selected, apply to all meshes in meshNames
+    else {
+      // console.log('No mesh selected - applying to all meshes');
+      // If meshNames is populated, use those names
+      if (modelStore.meshNames && modelStore.meshNames.length > 0) {
+        modelStore.meshNames.forEach(meshName => {
+          const mesh = FindMeshByName(meshName);
+          if (mesh) {
+            meshesToAnimate.push(mesh);
+          }
+        });
+      }
+      // Fallback: if meshNames is empty, find all meshes in the model
+      else {
+        model.traverse((child) => {
+          if (child.isMesh && child.material) {
+            meshesToAnimate.push(child);
+          }
+        });
+      }
+    }
+    // If there are meshes to animate, do it
+    if (meshesToAnimate.length > 0) {
+      LerpColors(meshesToAnimate, hex, 0.5);
+    } else {
+      console.warn("No meshes found to apply color to");
+    }
+  }
+
+  // #region [colorTeal] CUBIC FUNCTION
+  /**
+  * Implements a cubic easing function.
+  *
+  * @param {number} x - Input value between 0 and 1
+  * @returns {number} - Eased value between 0 and 1
+  *
+  * Process:
+  * Check if input value is in first or second half of animation.
+  * For first half (x < 0.5): Apply cubic acceleration using 4x³
+  * For second half (x ≥ 0.5): Apply cubic deceleration using 1-(-2x+2)³/2
+  * Return the calculated eased value
+  */
+  // #endregion
+
 var currentAnimation = null;
 function EaseInOutCubic(x) {
   return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3)/2;
 }
 
-// Utility function to find a mesh by name
-function findMeshByName(meshName) {
-  let targetMesh = null;
-  if (!model) return null;
-
-  model.traverse((child) => {
-    if (child.isMesh && child.name === meshName) {
-      targetMesh = child;
-    }
-  });
-
-  return targetMesh;
-}
-
+// #region [colorTeal] COLOR ANIMATOR
+/**
+ * Animates a smooth color transition.
+ * @param {Array<THREE.Mesh>} meshesToAnimate - Array of meshes to animate
+ * @param {number} endHex - Target color as a hexadecimal number
+ * @param {number} [duration=0.5] - Duration of the animation in seconds
+ *
+ * Process:
+ * Cancel any existing animation by calling cancelAnimationFrame.
+ * Reset the currentAnimation tracking variable.
+ * Convert target hex color to THREE.Color object.
+ * Init startTime as null (will be set on first animation frame).
+ * Store starting colors for each mesh to be animated.
+ * Clone materials to prevent shared material modifications.
+ * Define nested animation function that:
+ *   - Sets startTime on first call
+ *   - Calculates elapsed time and animation progress
+ *   - Applies easing function to progress value
+ *   - Updates each mesh's color using color interpolation
+ *   - Schedules next frame if animation not complete
+ *   - Clears animation reference when complete
+ * 8. Start the animation by requesting first frame.
+ *
+ * @requires EaseInOutCubic - Easing function
+ * @requires currentAnimation - Global variable for tracking animation state
+ */
+// #endregion
 // Function to animate color changes with smooth transitions
 function LerpColors(meshesToAnimate, endHex, duration = 0.5) {
   // Cancel any existing animation
@@ -116,7 +246,6 @@ function LerpColors(meshesToAnimate, endHex, duration = 0.5) {
     cancelAnimationFrame(currentAnimation);
     currentAnimation = null;
   }
-
   // Convert end hex to THREE.Color
   const endColor = new THREE.Color(endHex);
   let startTime = null;
@@ -150,130 +279,44 @@ function LerpColors(meshesToAnimate, endHex, duration = 0.5) {
         mesh.material.color.copy(currentColor);
       }
     }
-
     if (progress < 1) {
       currentAnimation = requestAnimationFrame(animate);
     } else {
       currentAnimation = null;
     }
   }
-
   currentAnimation = requestAnimationFrame(animate);
 }
 
-
-  // #region [colorTeal] HEX COLOR LOADER
-  /**
-   * Load and apply color to model's material.
-   *
-   * @param hex
-   *
-   * Process:
-   * Parse hex color string to an integer.
-   * Apply parsed color value to model's material.
-   * Update store flag to indicate color has been set.
-   */
-  // #endregion
-
-// Main function to load a color onto selected or all meshes
-function LoadColor(hex) {
-  console.log("Color to be loaded:", hex);
-  const activeMeshName = modelStore.activeMesh;
-
-  if (!model) {
-    console.error("Model not loaded");
-    return;
-  }
-
-  // Prepare array of meshes to animate
-  let meshesToAnimate = [];
-
-  // If a specific mesh is selected, only animate that one
-  if (activeMeshName) {
-    const targetMesh = findMeshByName(activeMeshName);
-    if (targetMesh) {
-      meshesToAnimate = [targetMesh];
-      console.log(`Applying color ${hex} to selected mesh: ${activeMeshName}`);
-    } else {
-      console.error(`Could not find mesh: ${activeMeshName}`);
-      return;
-    }
-  }
-  // If no mesh is selected, apply to all meshes in meshNames
-  else {
-    console.log('No mesh selected - applying to all meshes');
-
-    // If meshNames is populated, use those names
-    if (modelStore.meshNames && modelStore.meshNames.length > 0) {
-      modelStore.meshNames.forEach(meshName => {
-        const mesh = findMeshByName(meshName);
-        if (mesh) {
-          meshesToAnimate.push(mesh);
-        }
-      });
-    }
-    // Fallback: if meshNames is empty, find all meshes in the model
-    else {
-      model.traverse((child) => {
-        if (child.isMesh && child.material) {
-          meshesToAnimate.push(child);
-        }
-      });
-    }
-  }
-
-  // If we have meshes to animate, do it
-  if (meshesToAnimate.length > 0) {
-    LerpColors(meshesToAnimate, hex, 0.5);
-  } else {
-    console.warn("No meshes found to apply color to");
-  }
-}
-
-
-// #region [colorTeal] RESET COLOR
+// #region [colorTeal] FIND MESH BY NAME
 /**
- * Reset the color of the selected mesh within the model.
+ * Find mesh by name within the model.
+ * @param {string} meshName - The name of the mesh to find
+ * @returns {THREE.Mesh|null} - The found mesh or null if no matching mesh is found.
  *
  * Process:
- * Verify the model and selected mesh are accessible.
- * Traverse the model to find the matching mesh.
- * Clone existing material to prevent shared material editing.
- * Set the color to white (default color).
- * Update store flag to indicate color has been reset.
+ * Init targetMesh variable as null.
+ * Verify model exists, return null if not available.
+ * Traverse through all objects in the model hierarchy.
+ * For each child object, check if it's a mesh and has matching name.
+ * If match found, store reference to the mesh.
+ * Return the found mesh or null if no match.
+ *
+ *  @requires model - Loaded 3D model.
  */
 // #endregion
 
-function ResetColor() {
-  console.log("Resetting color...")
-  const activeMesh = modelStore.activeMesh;
-  var found = false;
+function FindMeshByName(meshName) {
+  let targetMesh = null;
+  if (!model) return null;
 
-  if (!model) {
-    console.error("Model not loaded");
-    return;
-  };
-  if (!activeMesh) {
-    console.error("No mesh selected");
-    return;
-  };
-
-  model.traverse((child)=> {
-    if (child.isMesh && child.name === activeMesh) {
-      if (child.material.isMaterial) {
-        child.material = child.material.clone();
-      };
-      found = true;
-      child.material.color.setHex(0xffffff);
+  model.traverse((child) => {
+    if (child.isMesh && child.name === meshName) {
+      targetMesh = child;
     }
   });
 
-  if(found) {
-    console.log(`Color reset successfully for ${activeMesh}`);
-  } else {
-    console.error(`Could not find mesh: ${activeMesh}`);
-  };
-  materialStore.colorReset = false;
+  return targetMesh;
 }
 
 onMounted(() => {
@@ -511,14 +554,6 @@ onMounted(() => {
     (val) => {
       if (val) {
         LoadColor(materialStore.color);
-      }
-    },
-  );
-  watch(
-    () => materialStore.colorReset,
-    (val) => {
-      if (val) {
-        ResetColor();
       }
     },
   );

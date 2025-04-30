@@ -17,6 +17,8 @@ export const useMaterialStore = defineStore("materialStore", () => {
 
   const activeColor = ref(""); // The color that's actively selected by the user
   const previewColor = ref(null); // The temporary color shown on hover
+  const defaultColor = "#ffffff";
+
   const selectedMaterial = ref("");
 
   const materials = [
@@ -51,6 +53,7 @@ export const useMaterialStore = defineStore("materialStore", () => {
   return {
     activeColor,
     previewColor,
+    defaultColor,
     colors,
     selectedMaterial,
     materials,
