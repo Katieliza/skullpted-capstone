@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, watch } from "vue";
+import { onMounted, watch, ref } from "vue";
 import { useControlStore } from "@/stores/controlStore.js";
 import { useModelStore } from "@/stores/modelStore.js";
 import { useMaterialStore } from "@/stores/materialStore.js";
@@ -19,6 +19,7 @@ const gltfLoader = new GLTFLoader();
 
 // Init 3D model
 let model = new THREE.Object3D();
+let colorParams, colorController;
 
 // region [colorBlack] TEXTURE MAP LOADER
 /**
@@ -231,16 +232,21 @@ function EaseInOutCubic(x) {
  *   - Calculates elapsed time and animation progress
  *   - Applies easing function to progress value
  *   - Updates each mesh's color using color interpolation
+ *   - Updates the GUI color picker in real-time
  *   - Schedules next frame if animation not complete
  *   - Clears animation reference when complete
  * 8. Start the animation by requesting first frame.
  *
  * @requires EaseInOutCubic - Easing function
  * @requires currentAnimation - Global variable for tracking animation state
+ * @requires colorParams - Object containing the current color parameter for the GUI
+ * @requires colorController - The gui controller for the color picker
  */
 // #endregion
+
 // Function to animate color changes with smooth transitions
 function LerpColors(meshesToAnimate, endHex, duration = 0.5) {
+
   // Cancel any existing animation
   if (currentAnimation) {
     cancelAnimationFrame(currentAnimation);
@@ -277,6 +283,22 @@ function LerpColors(meshesToAnimate, endHex, duration = 0.5) {
         const currentColor = new THREE.Color();
         currentColor.lerpColors(startColor, endColor, ease);
         mesh.material.color.copy(currentColor);
+
+        // Update GUI with the current color of the first mesh (real-time update)
+        if (i === 0) {
+          // Convert the current color to hex string
+          const currentHex = '#' + currentColor.getHexString();
+
+          // Only update if the color has changed enough (to avoid constant updates)
+          if (colorParams.color !== currentHex) {
+            colorParams.color = currentHex;
+            // Update the GUI without triggering onChange event to avoid recursion
+            const oldOnChange = colorController.__onChange;
+            colorController.__onChange = function() {};
+            colorController.updateDisplay();
+            colorController.__onChange = oldOnChange;
+          }
+        }
       }
     }
     if (progress < 1) {
@@ -284,7 +306,7 @@ function LerpColors(meshesToAnimate, endHex, duration = 0.5) {
     } else {
       currentAnimation = null;
     }
-  }
+    }
   currentAnimation = requestAnimationFrame(animate);
 }
 
@@ -333,21 +355,153 @@ onMounted(() => {
   const gui = new DAT.GUI( { autoPlace: false});
   document.getElementById('gui-container').appendChild(gui.domElement);
 
-  const guiOptions = {
+  // GUI settings
+  colorParams = {
     color: "#ffffff",
   }
-  const colorController = gui.addColor(guiOptions, "color").name("Custom Color");
 
-  colorController.onChange((value) => {
-    const activeMesh = modelStore.activeMesh;
-    if (model) {
-      model.traverse((child) => {
-        if (child.isMesh) {
-          child.material.color.set(value);
-        }
+  // Ambient light options
+  const ambientLightParams = {
+    intensity: 0.5,
+  }
+
+  // Key light options
+  const keyLightParams = {
+    intensity: 1.0,
+    posX: 5,
+    posY: 5,
+    posZ: 5,
+    showHelper: false,
+  }
+
+  // Fill light options
+  const fillLightParams = {
+    intensity: 0.5,
+    posX: 5,
+    posY: 5,
+    posZ: 5,
+    showHelper: false,
+  }
+
+  // Rim Light options
+  const rimLightParams = {
+    intensity: 0.5,
+    posX: 0,
+    posY: 5,
+    posZ: -5,
+    showHelper: false,
+  }
+
+  // GUI color controller
+  colorController = gui.addColor(colorParams, "color")
+    .name("Color")
+    .onChange((value) => {
+      const hex = new THREE.Color(value).getHex();
+      LoadColor(hex);
+    })
+
+  // Lighting folder
+  const lightingFolder = gui.addFolder("Lighting");
+  lightingFolder.open();
+
+    // Ambient light folder
+    const ambientLightFolder = lightingFolder.addFolder("Ambient Light");
+    ambientLightFolder.add(ambientLightParams, "intensity", 0, 1, 0.01)
+      .name("Intensity")
+      .onChange((value) => {
+        ambientLight.intensity = value;
       });
-    }
-  })
+
+    // Key light folder
+    const keyLightFolder = lightingFolder.addFolder("Key Light");
+    keyLightFolder.add(keyLightParams, "intensity", 0, 1, 0.01)
+      .name("Intensity")
+      .onChange((value) => {
+        keyLight.intensity = value;
+        keyLightHelper.update();
+      });
+    keyLightFolder.add(keyLightParams, "posX", -5, 5, 0.01)
+      .name("X-Axis Position")
+      .onChange((value) => {
+        keyLight.position.x = value;
+        keyLightHelper.update();
+      });
+    keyLightFolder.add(keyLightParams, "posY", -5, 5, 0.01)
+      .name("Y-Axis Position")
+      .onChange((value) => {
+        keyLight.position.y = value;
+        keyLightHelper.update();
+      });
+    keyLightFolder.add(keyLightParams, "posZ", -5, 5, 0.01)
+      .name("Z-Axis Position")
+      .onChange((value) => {
+        keyLight.position.z = value;
+        keyLightHelper.update();
+      });
+    keyLightFolder.add(keyLightParams, 'showHelper')
+      .name("Toggle Helper")
+      .onChange(value => {
+        keyLightHelper.visible = value;
+        keyLightHelper.update();
+      });
+
+    // Fill light folder
+    const fillLightFolder = lightingFolder.addFolder("Fill Light");
+    fillLightFolder.add(fillLightParams, "intensity", 0, 1, 0.01)
+      .name("Intensity")
+      .onChange((value) => {
+        fillLight.intensity = value;
+      });
+      fillLightFolder.add(fillLightParams, "posX", -5, 5, 0.01)
+      .name("X-Axis Position")
+      .onChange((value) => {
+        fillLight.position.x = value;
+      });
+      fillLightFolder.add(fillLightParams, "posY", -5, 5, 0.01)
+      .name("Y-Axis Position")
+      .onChange((value) => {
+        fillLight.position.y = value;
+      });
+      fillLightFolder.add(fillLightParams, "posZ", -5, 5, 0.01)
+      .name("Z-Axis Position")
+      .onChange((value) => {
+        fillLight.position.z = value;
+      });
+      fillLightFolder.add(fillLightParams, 'showHelper')
+      .name("Toggle Helper")
+      .onChange(value => {
+        fillLightHelper.visible = value;
+        fillLightHelper.update();
+      });
+
+    // Rim Light folder
+    const rimLightFolder = lightingFolder.addFolder("Rim Light");
+    rimLightFolder.add(rimLightParams, "intensity", 0, 1, 0.01)
+      .name("Intensity")
+      .onChange((value) => {
+        rimLight.intensity = value;
+      });
+      rimLightFolder.add(rimLightParams, "posX", -5, 5, 0.01)
+      .name("X-Axis Position")
+      .onChange((value) => {
+        rimLight.position.x = value;
+      });
+      rimLightFolder.add(rimLightParams, "posY", -5, 5, 0.01)
+      .name("Y-Axis Position")
+      .onChange((value) => {
+        rimLight.position.y = value;
+      });
+      rimLightFolder.add(rimLightParams, "posZ", -5, 5, 0.01)
+      .name("Z-Axis Position")
+      .onChange((value) => {
+        rimLight.position.z = value;
+      });
+      rimLightFolder.add(rimLightParams, 'showHelper')
+      .name("Toggle Helper")
+      .onChange(value => {
+        rimLightHelper.visible = value;
+        rimLightHelper.update();
+      });
 
   // Get window size
   const windowWidth = window.innerWidth;
@@ -379,31 +533,50 @@ onMounted(() => {
   const controls = new ObjectControls(camera, canvas, model);
   controls.enableHorizontalRotation();
   controls.enableVerticalRotation();
+  controls.setRotationSpeed(0.5);
+  controls.setZoomSpeed(0.5);
+  controls.setDistance(2, 15);
 
   // Axes visualizer
   const axesHelper = new THREE.AxesHelper(3);
 
   // Ambient Light (soft global light)
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+  const ambientLight = new THREE.AmbientLight(0xffffff, ambientLightFolder.intensity);
   scene.add(ambientLight);
 
   // Key light (main bright light)
-  const keyLight = new THREE.DirectionalLight(0xffffff, 2.0);
-  keyLight.position.set(5, 10, 5);
+  const keyLight = new THREE.DirectionalLight(0xffffff, keyLightFolder.intensity);
+  keyLight.position.set(keyLightParams.posX, keyLightParams.posY, keyLightParams.posZ);
   keyLight.castShadow = true;
   scene.add(keyLight)
-  const keyLightHelper = new THREE.DirectionalLightHelper(keyLight);
+
+  // Key light helper (visualize position)
+  const keyLightHelper = new THREE.DirectionalLightHelper(keyLight, 2);
+  keyLightHelper.visible = keyLightParams.showHelper;
   scene.add(keyLightHelper)
+  keyLightHelper.update();
 
   // Fill Light (secondary top left light)
-  const fillLight = new THREE.DirectionalLight(0xffffff, 0.2);
-  fillLight.position.set(-5, 5, 5);
+  const fillLight = new THREE.DirectionalLight(0xffffff, fillLightFolder.intensity);
   fillLight.castShadow = false;
+  scene.add(fillLight);
+
+  // Fill light helper (visualize position)
+  const fillLightHelper = new THREE.DirectionalLightHelper(fillLight, 2);
+  fillLightHelper.visible = fillLightParams.showHelper;
+  scene.add(fillLightHelper)
+  fillLightHelper.update();
 
   // Rim Light (backlit light to crispen edges)
-  const rimLight = new THREE.DirectionalLight(0xffffff, 0.6);
-  rimLight.position.set(0, 5, -5);
+  const rimLight = new THREE.DirectionalLight(0xffffff, rimLightFolder.intensityy);
   rimLight.castShadow = false;
+  scene.add(rimLight);
+
+  // Rim light helper (visualize position)
+  const rimLightHelper = new THREE.DirectionalLightHelper(rimLight, 2);
+  rimLightHelper.visible = rimLightParams.showHelper;
+  scene.add(rimLightHelper)
+  rimLightHelper.update();
 
   // Floor (only show shadows)
   const floorGeo = new THREE.PlaneGeometry(50, 50);
@@ -460,95 +633,16 @@ onMounted(() => {
   }
   renderer.setAnimationLoop(animate);
 
-  // *************************************** FUNCTIONS ****************************************** //
-  var zoomInterval;
+  // #region [colorBlack] WATCHERS
 
-  function ZoomIn() {
-    console.log("Zooming in...");
-    camera.position.multiplyScalar(0.99);
+watch(
+  () => materialStore.selectedMaterial,
+  (newMaterial) => {
+  if (newMaterial) {
+    LoadMaterial(newMaterial);
   }
-  function ZoomInStart() {
-    clearInterval(zoomInterval);
-    zoomInterval = setInterval(ZoomIn, 16);
-  }
-  function ZoomOut() {
-    console.log("Zooming out...");
-    camera.position.multiplyScalar(1.01);
-  }
-  function ZoomOutStart() {
-    clearInterval(zoomInterval);
-    zoomInterval = setInterval(ZoomOut, 16);
-  }
-  function ZoomStop() {
-    clearInterval(zoomInterval);
-  }
-  function ViewReset() {
-    clearInterval(zoomInterval);
-    controls.reset();
-  }
-  function RotatePause() {
-    controls.autoRotate = false;
-  }
-  function RotatePlay() {
-    controls.autoRotate = true;
-  }
+});
 
-  // #region [colorRed] WATCHERS
-  watch(
-    () => controlStore.zoomIn,
-    (val) => {
-      if (val) {
-        ZoomInStart();
-      } else {
-        ZoomStop();
-      }
-    },
-  );
-  watch(
-    () => controlStore.zoomOut,
-    (val) => {
-      if (val) {
-        ZoomOutStart();
-      } else {
-        ZoomStop();
-      }
-    },
-  );
-  watch(
-    () => controlStore.viewReset,
-    (val) => {
-      if (val) {
-        ViewReset();
-      } else {
-        ZoomStop();
-      }
-    },
-  );
-  watch(
-    () => controlStore.rotate,
-    (val) => {
-      if (val) {
-        RotatePlay();
-      } else {
-        RotatePause();
-      }
-    },
-  );
-  watch(
-    () => materialStore.colorSet,
-    (val) => {
-      if (val) {
-        LoadColor(materialStore.color);
-      }
-    },
-  );
-  watch(
-    () => materialStore.selectedMaterial,
-    (newMaterial) => {
-    if (newMaterial) {
-      LoadMaterial(newMaterial);
-    }
-  });
 watch(
   () => [materialStore.previewColor, materialStore.activeColor],
   ([preview, active]) => {
@@ -560,6 +654,19 @@ watch(
   },
   { immediate: true }
 );
+
+watch(
+  () => controlStore.zoomLevel,
+  (newZoom) => {
+    if (controls && typeof controls.setDistance === 'function') {
+      console.log("zoom watch triggered")
+      if (camera) {
+        camera.position.z = newZoom
+      }
+    }
+  }
+)
+
   // #endregion
 });
 </script>

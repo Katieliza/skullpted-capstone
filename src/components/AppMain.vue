@@ -9,8 +9,6 @@ const controlStore = useControlStore();
 const modelStore = useModelStore();
 const materialStore = useMaterialStore();
 
-const materials = ['Matte Metal', 'Leather'];
-
 const activeToolie = ref(null)
 const toolieX = ref(0);
 const toolieY = ref(0);
@@ -35,26 +33,6 @@ function ResetColor() {
     // console.log("Requesting color reset")
   materialStore.RequestColorReset();
 }
-function RequestZoomIn() {
-  // console.log("Requesing zoom in");
-  controlStore.RequestZoomIn();
-}
-function RequestZoomOut() {
-  // console.log("Requesting zoom out");
-  controlStore.RequestZoomOut();
-}
-function RequestZoomStop() {
-  //console.log("Requesting zoom stop");
-  controlStore.RequestZoomStop();
-}
-function RequestViewReset() {
-  // console.log("Requesting view reset");
-  controlStore.RequestViewReset();
-}
-function RequestRotate() {
-  // console.log
-  controlStore.RequestRotate();
-}
 onMounted(() => {
   console.log("AppMain has been mounted");
 });
@@ -64,8 +42,8 @@ onMounted(() => {
   <!--------------------Zoom control buttons --------------------->
   <div id="zoom-controls" class="control-panel"
     style="height: fit-content; width: 100vw; flex-direction: row; justify-content: center; bottom: 5%;">
-    <button class="controls-button" @mousedown="RequestZoomIn" @mouseup="RequestZoomStop" @mouseleave="RequestZoomStop"
-      @touchstart="RequestZoomIn" @touchened="RequestZoomStop"> Zoom In </button>
+    <button @mousedown="() => controlStore.StartZoomIn('in')" @mouseup="controlStore.StopZoomIn"
+      @mouseleave="controlStore.StopZoomIn">Zoom In</button>
     <button class="controls-button" @mousedown="RequestZoomOut" @mouseup="RequestZoomStop" @mouseleave="RequestZoomStop"
       @touchstart="RequestZoomOut" @touchened="RequestZoomStop"> Zoom Out </button>
     <button class="controls-button" @click="RequestViewReset">Reset View</button>

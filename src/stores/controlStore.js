@@ -5,57 +5,48 @@ import AppIntro from "@/components/AppIntro.vue";
 export const useControlStore = defineStore("controlStore", () => {
   const currentView = ref(markRaw(AppIntro)); // Mark as raw so Vue doesn't reactively track
 
-  const zoomIn = ref(false);
-  const zoomOut = ref(false);
-  const viewReset = ref(false);
-  const rotate = ref(true);
-  const rotateText = ref("Pause");
-
   function SetView(viewName) {
     currentView.value = markRaw(viewName); // Mark as raw when updating
   }
-  function RequestZoomIn() {
-    // console.log("Zoom in request received");
-    zoomIn.value = true;
+
+  const zoomLevel = ref(5);
+  const zoomInterval = ref(null);
+
+  function ZoomIn() {
+    zoomLevel.value /= 1.05;
   }
-  function RequestZoomOut() {
-    // console.log("Zoom out request received");
-    zoomIn.value = false;
-    zoomOut.value = true;
+
+  function ZoomOut() {
+    zoomLevel.value /= 1.1;
   }
-  function RequestZoomStop() {
-    // console.log("Zoom stop request received");
-    zoomIn.value = false;
-    zoomOut.value = false;
-    viewReset.value = false;
+
+  function ResetZoom() {
+    zoomLevel.value = 5;
   }
-  function RequestViewReset() {
-    // console.log("Zoom reset request received");
-    viewReset.value = true;
+
+  function StartZoomIn(direction) {
+    StopZoomIn();
+    const action = direction === "in" ? ZoomIn : ZoomOut;
+    action();
+    zoomInterval.value = setInterval(action, 100);
   }
-  function RequestRotate() {
-    // Play rotation if it is paused
-    if (rotate.value == false) {
-      rotate.value = true;
-      rotateText.value = "Pause"; // Set text to pause
-      // Pause rotation if it is playing
-    } else if (rotate.value == true) {
-      rotate.value = false;
-      rotateText.value = "Play"; // Set text to play
+
+  function StopZoomIn() {
+    if (zoomInterval.value) {
+      clearInterval(zoomInterval.value);
+      zoomInterval.value = null;
     }
   }
+
   return {
     currentView,
-    zoomIn,
-    zoomOut,
-    viewReset,
-    rotate,
-    rotateText,
+    zoomLevel,
+
+    ZoomIn,
+    ZoomOut,
+    ResetZoom,
+    StartZoomIn,
+    StopZoomIn,
     SetView,
-    RequestZoomIn,
-    RequestZoomOut,
-    RequestZoomStop,
-    RequestViewReset,
-    RequestRotate,
   };
 });
