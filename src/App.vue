@@ -15,7 +15,7 @@ const controlStore = useControlStore()
     padding: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgb(170, 170, 170);
+    background-color: rgb(34, 34, 34);
     color: white;
   }
 

@@ -362,7 +362,7 @@ onMounted(() => {
 
   // Ambient light options
   const ambientLightParams = {
-    intensity: 0.5,
+    intensity: 0.15,
   }
 
   // Key light options
@@ -376,7 +376,7 @@ onMounted(() => {
 
   // Fill light options
   const fillLightParams = {
-    intensity: 0.5,
+    intensity: 0.55,
     posX: 5,
     posY: 5,
     posZ: 5,
@@ -385,11 +385,24 @@ onMounted(() => {
 
   // Rim Light options
   const rimLightParams = {
-    intensity: 0.5,
+    intensity: 0.65,
     posX: 0,
     posY: 5,
     posZ: -5,
     showHelper: false,
+  }
+
+  // Spotlight folder options
+  const spotLightParams = {
+    intensity: 3.0,
+    posX: 0,
+    posY: 3,
+    posZ: 5,
+    showHelper: false,
+    angle: 0.3,
+    penumbra: 0.2,
+    decay: 1.0,
+    distance: 15,
   }
 
   // GUI color controller
@@ -474,7 +487,7 @@ onMounted(() => {
         fillLightHelper.update();
       });
 
-    // Rim Light folder
+    // Rim light folder
     const rimLightFolder = lightingFolder.addFolder("Rim Light");
     rimLightFolder.add(rimLightParams, "intensity", 0, 1, 0.01)
       .name("Intensity")
@@ -503,6 +516,67 @@ onMounted(() => {
         rimLightHelper.update();
       });
 
+    // Spot light folder
+    const spotLightFolder = lightingFolder.addFolder("Spotlight");
+    spotLightFolder.add(spotLightParams, "intensity", 0, 5, 0.1)
+      .name("Intensity")
+      .onChange((value) => {
+        spotLight.intensity = value;
+        spotLightHelper.update();
+      });
+    spotLightFolder.add(spotLightParams, "posX", -10, 10, 0.1)
+      .name("X Position")
+      .onChange((value) => {
+        spotLight.position.x = value;
+        spotLightHelper.update();
+      });
+    spotLightFolder.add(spotLightParams, "posY", 0, 10, 0.1)
+      .name("Y Position")
+      .onChange((value) => {
+        spotLight.position.y = value;
+        spotLightHelper.update();
+      });
+    spotLightFolder.add(spotLightParams, "posZ", -10, 10, 0.1)
+      .name("Z Position")
+      .onChange((value) => {
+        spotLight.position.z = value;
+        spotLightHelper.update();
+      });
+      spotLightFolder.add(spotLightParams, "showHelper")
+      .name("Show Helper")
+      .onChange((value) => {
+        spotLightHelper.visible = value;
+        spotLightHelper.update();
+      });
+    spotLightFolder.add(spotLightParams, "angle", 0.05, 1, 0.01)
+      .name("Angle")
+      .onChange((value) => {
+        spotLight.angle = value;
+        spotLightHelper.update();
+      });
+    spotLightFolder.add(spotLightParams, "penumbra", 0, 1, 0.01)
+      .name("Penumbra")
+      .onChange((value) => {
+        spotLight.penumbra = value;
+        spotLightHelper.update();
+      });
+    spotLightFolder.add(spotLightParams, "decay", 0, 2, 0.1)
+      .name("Decay")
+      .onChange((value) => {
+        spotLight.decay = value;
+        spotLightHelper.update();
+      });
+    spotLightFolder.add(spotLightParams, "distance", 0, 30, 1)
+      .name("Distance")
+      .onChange((value) => {
+        spotLight.distance = value;
+        spotLightHelper.update();
+      });
+
+    // Open folders
+    ambientLightFolder.open();
+    keyLightFolder.open();
+
   // Get window size
   const windowWidth = window.innerWidth;
   const windowHeight = window.innerHeight;
@@ -525,23 +599,20 @@ onMounted(() => {
     renderer.setSize(windowWidth, windowHeight);
   });
 
-  // Init perspective camera
+  // Perspective camera
   const camera = new THREE.PerspectiveCamera(75, windowWidth / windowHeight, 0.1, 1000);
   camera.position.set(0, 0, 5);
 
-  // Controls
+  // Object controls
   const controls = new ObjectControls(camera, canvas, model);
-  controls.enableHorizontalRotation();
-  controls.enableVerticalRotation();
   controls.setRotationSpeed(0.5);
   controls.setZoomSpeed(0.5);
   controls.setDistance(2, 15);
-
-  // Axes visualizer
-  const axesHelper = new THREE.AxesHelper(3);
+  controls.enableHorizontalRotation();
 
   // Ambient Light (soft global light)
   const ambientLight = new THREE.AmbientLight(0xffffff, ambientLightFolder.intensity);
+  ambientLight.intensity = ambientLightParams.intensity; // Manually apply once
   scene.add(ambientLight);
 
   // Key light (main bright light)
@@ -577,6 +648,37 @@ onMounted(() => {
   rimLightHelper.visible = rimLightParams.showHelper;
   scene.add(rimLightHelper)
   rimLightHelper.update();
+
+  // Spot light (dramatic light)
+  const spotLight = new THREE.SpotLight(
+    new THREE.Color(spotLightParams.color),
+    spotLightParams.intensity,
+    spotLightParams.distance,
+    spotLightParams.angle,
+    spotLightParams.penumbra,
+    spotLightParams.decay
+  );
+  spotLight.position.set(spotLightParams.posX, spotLightParams.posY, spotLightParams.posZ);
+  scene.add(spotLight);
+
+  // Improve shadow quality
+  spotLight.shadow.mapSize.width = 1024;
+  spotLight.shadow.mapSize.height = 1024;
+  spotLight.shadow.camera.near = 0.5;
+  spotLight.shadow.camera.far = 20;
+  spotLight.shadow.bias = -0.0001;
+  spotLight.shadow.focus = 1;
+
+  // Spot light target (point to center of screen)
+  const spotLightTarget = new THREE.Object3D();
+  spotLightTarget.position.set(0, 0, 0);
+  scene.add(spotLightTarget);
+  spotLight.target = spotLightTarget;
+
+  // Spot light helper (visualize position)
+  const spotLightHelper = new THREE.SpotLightHelper(spotLight);
+  spotLightHelper.visible = spotLightParams.showHelper;
+  scene.add(spotLightHelper);
 
   // Floor (only show shadows)
   const floorGeo = new THREE.PlaneGeometry(50, 50);
