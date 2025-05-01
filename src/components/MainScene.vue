@@ -5,7 +5,7 @@ import { useModelStore } from "@/stores/modelStore.js";
 import { useMaterialStore } from "@/stores/materialStore.js";
 import * as THREE from "three";
 import * as DAT from "dat.gui";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { ObjectControls } from "threejs-object-controls"
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 // Init stores
@@ -18,9 +18,9 @@ const textureLoader = new THREE.TextureLoader();
 const gltfLoader = new GLTFLoader();
 
 // Init 3D model
-let model;
+let model = new THREE.Object3D();
 
-// region [colorTeal] TEXTURE MAP LOADER
+// region [colorBlack] TEXTURE MAP LOADER
 /**
  * Auto-load texture maps for given material.
  *
@@ -61,7 +61,7 @@ function LoadTextureMaps(basePath, baseName, mapSuffix = {
   return maps;
 }
 
-// region [colorTeal] MATERIAL LOADER
+// region [colorBlack] MATERIAL LOADER
 /**
  * Loads material onto the active mesh or all meshes if none are selected.
  *
@@ -113,7 +113,7 @@ function LoadMaterial(mat) {
       }
   }
 
-  // #region [colorTeal] HEX COLOR LOADER
+  // #region [colorBlack] HEX COLOR LOADER
     /**
      * Apply a color to the active mesh or entire model if no active mesh.
      *
@@ -192,7 +192,7 @@ function LoadMaterial(mat) {
     }
   }
 
-  // #region [colorTeal] CUBIC FUNCTION
+  // #region [colorBlack] CUBIC FUNCTION
   /**
   * Implements a cubic easing function.
   *
@@ -212,7 +212,7 @@ function EaseInOutCubic(x) {
   return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3)/2;
 }
 
-// #region [colorTeal] COLOR ANIMATOR
+// #region [colorBlack] COLOR ANIMATOR
 /**
  * Animates a smooth color transition.
  * @param {Array<THREE.Mesh>} meshesToAnimate - Array of meshes to animate
@@ -288,7 +288,7 @@ function LerpColors(meshesToAnimate, endHex, duration = 0.5) {
   currentAnimation = requestAnimationFrame(animate);
 }
 
-// #region [colorTeal] FIND MESH BY NAME
+// #region [colorBlack] FIND MESH BY NAME
 /**
  * Find mesh by name within the model.
  * @param {string} meshName - The name of the mesh to find
@@ -349,7 +349,72 @@ onMounted(() => {
     }
   })
 
-  // #region [colorTeal] GLTF MODEL LOADER
+  // Get window size
+  const windowWidth = window.innerWidth;
+  const windowHeight = window.innerHeight;
+
+  // Calculate aspect ratio
+  const aspect = windowWidth / windowHeight;
+
+  // Set renderer size to window
+  renderer.setSize(windowWidth, windowHeight);
+
+  // Handle window resize
+  window.addEventListener("resize", () => {
+    // Calculate new size
+    const windowWidth = window.innerWidth / 1.5;
+    const windowHeight = window.innerHeight;
+    // Update aspect and projection matrix
+    camera.aspect = windowWidth / windowHeight;
+    camera.updateProjectionMatrix();
+    // Update renderer size
+    renderer.setSize(windowWidth, windowHeight);
+  });
+
+  // Init perspective camera
+  const camera = new THREE.PerspectiveCamera(75, windowWidth / windowHeight, 0.1, 1000);
+  camera.position.set(0, 0, 5);
+
+  // Controls
+  const controls = new ObjectControls(camera, canvas, model);
+  controls.enableHorizontalRotation();
+  controls.enableVerticalRotation();
+
+  // Axes visualizer
+  const axesHelper = new THREE.AxesHelper(3);
+
+  // Ambient Light (soft global light)
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+  scene.add(ambientLight);
+
+  // Key light (main bright light)
+  const keyLight = new THREE.DirectionalLight(0xffffff, 2.0);
+  keyLight.position.set(5, 10, 5);
+  keyLight.castShadow = true;
+  scene.add(keyLight)
+  const keyLightHelper = new THREE.DirectionalLightHelper(keyLight);
+  scene.add(keyLightHelper)
+
+  // Fill Light (secondary top left light)
+  const fillLight = new THREE.DirectionalLight(0xffffff, 0.2);
+  fillLight.position.set(-5, 5, 5);
+  fillLight.castShadow = false;
+
+  // Rim Light (backlit light to crispen edges)
+  const rimLight = new THREE.DirectionalLight(0xffffff, 0.6);
+  rimLight.position.set(0, 5, -5);
+  rimLight.castShadow = false;
+
+  // Floor (only show shadows)
+  const floorGeo = new THREE.PlaneGeometry(50, 50);
+  const floorMat = new THREE.ShadowMaterial({ opacity: 0.3 });
+  const floor = new THREE.Mesh(floorGeo, floorMat);
+  floor.rotation.x = -Math.PI / 2; // Lie the plane flat
+  floor.position.y = -2.5; // Position below model
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  // #region [colorBlack] GLTF MODEL LOADER
   /**
    * Load GLTF headphone model into scene
    *
@@ -387,93 +452,13 @@ onMounted(() => {
     },
   );
 
-  // Get window size
-  const windowWidth = window.innerWidth;
-  const windowHeight = window.innerHeight;
-
-  // Calculate aspect ratio
-  const aspect = windowWidth / windowHeight;
-
-  // Set renderer size to window
-  renderer.setSize(windowWidth, windowHeight);
-
-  // Handle window resize
-  window.addEventListener("resize", () => {
-    // Calculate new size
-    const windowWidth = window.innerWidth / 1.5;
-    const windowHeight = window.innerHeight;
-    // Update aspect and projection matrix
-    camera.aspect = windowWidth / windowHeight;
-    camera.updateProjectionMatrix();
-    // Update renderer size
-    renderer.setSize(windowWidth, windowHeight);
-  });
-
-  // Init perspective camera
-  const camera = new THREE.PerspectiveCamera(75, windowWidth / windowHeight, 0.1, 1000);
-  camera.position.set(0, 0, 5);
-
-  // Orbit controls
-  const controls = new OrbitControls(camera, canvas);
-  controls.autoRotate = true;
-  controls.enableZoom = true;
-  controls.enablePan = false;
-  controls.minDistance = 3; // Closest zoom level
-  controls.maxDistance = 8; // Furthest zoom level
-
-
-  controls.target.set(0,0,0);
-  controls.update();
-
-  // Axes visualizer
-  const axesHelper = new THREE.AxesHelper(3);
-
-  // Ambient Light (soft global light)
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
-  scene.add(ambientLight);
-
-  // Key light (main bright light)
-  const keyLight = new THREE.DirectionalLight(0xffffff, 2.0);
-  keyLight.position.set(5, 10, 5);
-  keyLight.castShadow = true;
-  scene.add(keyLight)
-  const keyLightHelper = new THREE.DirectionalLightHelper(keyLight);
-  scene.add(keyLightHelper)
-
-  // Fill Light (secondary top left light)
-  const fillLight = new THREE.DirectionalLight(0xffffff, 0.2);
-  fillLight.position.set(-5, 5, 5);
-  fillLight.castShadow = false;
-
-  // Rim Light (backlit light to crispen edges)
-  const rimLight = new THREE.DirectionalLight(0xffffff, 0.6);
-  rimLight.position.set(0, 5, -5);
-  rimLight.castShadow = false;
-
-  // Floor (only show shadows)
-  const floorGeo = new THREE.PlaneGeometry(50, 50);
-  const floorMat = new THREE.ShadowMaterial({ opacity: 0.3 });
-  const floor = new THREE.Mesh(floorGeo, floorMat);
-  floor.rotation.x = -Math.PI / 2; // Lie the plane flat
-  floor.position.y = -2.5; // Position below model
-  floor.receiveShadow = true;
-  scene.add(floor);
-
-/*
-  CUBE FOR TESTING
-  const cg = new THREE.BoxGeometry(1, 1, 1);
-  const cm = new THREE.MeshStandardMaterial({color: 0x00ff00})
-  const c = new THREE.Mesh(cg, cm);
-  c.castShadow = true;
-  scene.add(c) */
-
-  const animate = () => {
-    requestAnimationFrame(animate);
-    controls.update();
+  function animate() {
+    if (!controls.isUserInteractionActive()) {
+      model.rotation.y += 0.01;
+    }
     renderer.render(scene, camera);
-
-  };
-  animate();
+  }
+  renderer.setAnimationLoop(animate);
 
   // *************************************** FUNCTIONS ****************************************** //
   var zoomInterval;
