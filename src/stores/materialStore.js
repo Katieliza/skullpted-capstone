@@ -17,7 +17,7 @@ export const useMaterialStore = defineStore("materialStore", () => {
 
   const activeColor = ref(""); // The color that's actively selected by the user
   const previewColor = ref(null); // The temporary color shown on hover
-  const defaultColor = "#ffffff";
+  const resetModel = ref(null);
 
   const selectedMaterial = ref("");
 
@@ -27,6 +27,7 @@ export const useMaterialStore = defineStore("materialStore", () => {
   ];
 
   // Generate display names for use in v-select
+
   const displayNames = computed(() => materials.map((mat) => mat.name));
 
   function SetPreviewColor(hex) {
@@ -36,6 +37,7 @@ export const useMaterialStore = defineStore("materialStore", () => {
   function ClearPreviewColor() {
     previewColor.value = null;
   }
+
   function SetDefaultColor(hex) {
     activeColor.value = hex;
     previewColor.value = null; // Clear preview
@@ -50,19 +52,29 @@ export const useMaterialStore = defineStore("materialStore", () => {
     const material = materials.find((mat) => mat.name === name);
     return material?.baseName || null;
   }
+  function ResetAll() {
+    resetModel.value = true;
+  }
+  function ClearReset() {
+    resetModel.value = null;
+  }
+
   return {
     activeColor,
     previewColor,
-    defaultColor,
+
     colors,
     selectedMaterial,
     materials,
     displayNames,
+    resetModel,
 
     SetDefaultColor,
     SetPreviewColor,
     ClearPreviewColor,
     SetSelectedMaterial,
     GetBaseName,
+    ResetAll,
+    ClearReset,
   };
 });

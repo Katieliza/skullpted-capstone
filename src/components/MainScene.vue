@@ -193,6 +193,36 @@ function LoadMaterial(mat) {
     }
   }
 
+  function ResetToDefault(duration = 0.5) {
+    console.log("made it to rresettodefault")
+    var meshesToAnimate = [];
+
+    model.traverse(child => {
+      if (child.isMesh && child.material) {
+        // Ensure the material is cloned so LerpColors can animate it safely
+        if (!child.material._isCloned) {
+          child.material = child.material.clone();
+          child.material._isCloned = true;
+        }
+        const mat = child.material;
+        mat.map = null;
+        mat.normalMap = null;
+        mat.roughnessMap = null;
+        mat.metalnessMap = null;
+        mat.emissiveMap = null;
+        mat.envMap = null
+        mat.needsUpdate = true;
+        meshesToAnimate.push(child);
+      }
+    });
+
+    if (meshesToAnimate.length) {
+      LerpColors(meshesToAnimate, 0xffffff, duration);
+    } else {
+      console.warn("No meshes found to reset to white");
+    }
+    };
+
   // #region [colorBlack] CUBIC FUNCTION
   /**
   * Implements a cubic easing function.
@@ -756,6 +786,15 @@ watch(
   },
   { immediate: true }
 );
+watch(
+  () => materialStore.resetModel,
+  (value) => {
+    if (value) {
+      ResetToDefault();
+      materialStore.ClearReset();
+    }
+  }
+)
 
 watch(
   () => controlStore.zoomLevel,
@@ -768,6 +807,7 @@ watch(
     }
   }
 )
+
 
   // #endregion
 });

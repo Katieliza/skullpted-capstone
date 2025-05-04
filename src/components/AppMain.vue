@@ -29,10 +29,6 @@ function HandleMouseLeave(e) {
   materialStore.ClearPreviewColor();
 
 }
-function ResetColor() {
-    // console.log("Requesting color reset")
-  materialStore.RequestColorReset();
-}
 onMounted(() => {
   console.log("AppMain has been mounted");
 });
@@ -40,7 +36,7 @@ onMounted(() => {
 <template>
   <MainScene />
   <!--------------------Zoom control buttons --------------------->
-  <div id="zoom-controls" class="control-panel"
+  <!--  <div id="zoom-controls" class="control-panel"
     style="height: fit-content; width: 100vw; flex-direction: row; justify-content: center; bottom: 5%;">
     <button @mousedown="() => controlStore.StartZoomIn('in')" @mouseup="controlStore.StopZoomIn"
       @mouseleave="controlStore.StopZoomIn">Zoom In</button>
@@ -48,7 +44,7 @@ onMounted(() => {
       @touchstart="RequestZoomOut" @touchened="RequestZoomStop"> Zoom Out </button>
     <button class="controls-button" @click="RequestViewReset">Reset View</button>
     <button class="controls-button" @click="RequestRotate">{{ controlStore.rotateText }}</button>
-  </div>
+  </div> -->
   <!--
   <div id="view-controls" class="control-panel" style="left: 25%; bottom: 5%">
     <button class="controls-button">Front</button>
@@ -67,8 +63,8 @@ onMounted(() => {
       <div class="toolie" v-if="activeToolie === color.hex" :style="{ top: toolieY + 'px', left: toolieX + 'px' }"> {{
         color.name }} </div>
     </div>
-    <button @click="ResetColor" class="controls-button" style="background-color: rgba(0,0,0,0.5) !important">Reset
-      Color</button>
+    <button @click="materialStore.resetModel = true" class="controls-button"
+      style="background-color: rgba(0,0,0,0.5)">Reset Color</button>
   </v-row>
   <v-row id="select-container">
     <div class="selector" style="margin-bottom: 100px">
