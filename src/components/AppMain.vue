@@ -45,6 +45,8 @@ onMounted(() => {
     <button class="controls-button" @click="RequestViewReset">Reset View</button>
     <button class="controls-button" @click="RequestRotate">{{ controlStore.rotateText }}</button>
   </div> -->
+  <button class="controls-button" style="bottom: 20px; position:absolute" @click="controlStore.ToggleRotation">{{
+    controlStore.rotationText }}</button>
   <!--
   <div id="view-controls" class="control-panel" style="left: 25%; bottom: 5%">
     <button class="controls-button">Front</button>
@@ -54,7 +56,10 @@ onMounted(() => {
   </div>
   -->
   <v-row id="color-panel">
-    <div style="width: 100%; padding: 0px 0px 10px 10px; color: white;">Colors</div>
+    <div style="width: 100%; padding: 0px 0px 10px 10px; color: white;">Colors <p style="font-size: small">Hover over a
+        swatch to preview the color.</p>
+      <p style="font-size: small">Click to apply selection.</p>
+    </div>
     <div v-for="color in materialStore.colors" :key="color.hex">
       <button @click="materialStore.activeColor = color.hex" class="color-button"
         :style="{ backgroundColor: color.hex }" @mouseenter="(e => HandleMouseEnter(e, color.hex))"
@@ -63,8 +68,7 @@ onMounted(() => {
       <div class="toolie" v-if="activeToolie === color.hex" :style="{ top: toolieY + 'px', left: toolieX + 'px' }"> {{
         color.name }} </div>
     </div>
-    <button @click="materialStore.resetModel = true" class="controls-button"
-      style="background-color: rgba(0,0,0,0.5)">Reset Color</button>
+    <button @click="materialStore.resetModel = true" class="controls-button">Reset Color</button>
   </v-row>
   <v-row id="select-container">
     <div class="selector" style="margin-bottom: 100px">
@@ -90,7 +94,7 @@ onMounted(() => {
     max-width: 25vw;
     padding: 20px 0px 20px 20px;
     right: 2%;
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.104);
     border-radius: 5px;
   }
 
@@ -132,19 +136,23 @@ onMounted(() => {
   }
 
   .controls-button:hover {
-    border: 1px solid white;
+    background-color: rgba(172, 172, 172, 0.2);
   }
-
 
   .color-button {
     height: 40px;
     width: 40px;
     border: 2px solid rgba(255, 255, 255, 0.434);
-    margin: 5px 10px 5px 10px
+    margin: 5px 10px 5px 10px;
+    filter: brightness(0.5)
   }
 
-  .color-button:hover {
+  .color-button:hover,
+  .color-button:active {
     border: 2px solid white;
+    filter: brightness(1);
+    transform: scale(1.1);
+    transition: transform 0.2s ease
   }
 
   .toolie {

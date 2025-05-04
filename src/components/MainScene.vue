@@ -17,6 +17,8 @@ const materialStore = useMaterialStore();
 const textureLoader = new THREE.TextureLoader();
 const gltfLoader = new GLTFLoader();
 
+const isRotating = ref(true);
+
 // Init 3D model
 let model = new THREE.Object3D();
 let colorParams, colorController;
@@ -635,10 +637,11 @@ onMounted(() => {
 
   // Object controls
   const controls = new ObjectControls(camera, canvas, model);
-  controls.setRotationSpeed(0.5);
+  controls.enaleZoom = true;
   controls.setZoomSpeed(0.5);
-  controls.setDistance(2, 15);
-  controls.enableHorizontalRotation();
+  controls.enableHorizontalRotation = true;
+  controls.enableVerticalRotation = true;
+
 
   // Ambient Light (soft global light)
   const ambientLight = new THREE.AmbientLight(0xffffff, ambientLightFolder.intensity);
@@ -756,14 +759,21 @@ onMounted(() => {
       modelStore.SetMeshNames(modelMeshes);
     },
   );
-
   function animate() {
-    if (!controls.isUserInteractionActive()) {
-      model.rotation.y += 0.01;
+
+    if (controlStore.isRotating) {
+      model.rotation.y += 0.005;
+      controlStore.rotationText = "Pause Rotation"
+    } else {
+      controlStore.rotationText = "Play Rotation"
     }
+
+
+
     renderer.render(scene, camera);
   }
   renderer.setAnimationLoop(animate);
+
 
   // #region [colorBlack] WATCHERS
 
@@ -795,15 +805,11 @@ watch(
     }
   }
 )
-
 watch(
-  () => controlStore.zoomLevel,
-  (newZoom) => {
-    if (controls && typeof controls.setDistance === 'function') {
-      console.log("zoom watch triggered")
-      if (camera) {
-        camera.position.z = newZoom
-      }
+  () => controlStore.isRotating,
+  (value) => {
+    if (value) {
+      !controlStore.isRotating
     }
   }
 )

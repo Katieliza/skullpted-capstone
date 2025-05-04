@@ -9,9 +9,14 @@ export const useControlStore = defineStore("controlStore", () => {
     currentView.value = markRaw(viewName); // Mark as raw when updating
   }
 
+  const isRotating = ref(true);
   const zoomLevel = ref(5);
   const zoomInterval = ref(null);
+  const rotationText = ref("Pause Rotation");
 
+  function ToggleRotation() {
+    isRotating.value = !isRotating.value;
+  }
   function ZoomIn() {
     zoomLevel.value /= 1.05;
   }
@@ -41,6 +46,8 @@ export const useControlStore = defineStore("controlStore", () => {
   return {
     currentView,
     zoomLevel,
+    isRotating,
+    rotationText,
 
     ZoomIn,
     ZoomOut,
@@ -48,5 +55,6 @@ export const useControlStore = defineStore("controlStore", () => {
     StartZoomIn,
     StopZoomIn,
     SetView,
+    ToggleRotation,
   };
 });
